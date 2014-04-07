@@ -1,0 +1,272 @@
+@import url(http://fonts.googleapis.com/css?family=Open+Sans);
+
+html {
+}
+
+body {
+    font-family: 'Open Sans', sans-serif;
+    /*overflow: hidden;*/
+    width: 100%;
+}
+
+.clear {
+    /*clear:both;*/
+}
+
+.left {
+    float: left;
+}
+
+.header {
+    padding-bottom: 10px;
+    padding-top: 10px;
+    font-size: 16px;
+    text-decoration: none;
+    text-align: center;
+}
+
+.metadata {
+    margin-left: 10px;
+}
+
+.logdata {
+    margin-left: 20px;
+}
+
+#serverstatus {
+    font-family: Consolas;
+    margin-left: 30px;
+}
+
+.serverstatus {
+    margin-left: 45px;
+}
+
+#statusDiv {
+    float: left;
+    /*position:relative;
+        left:830px;*/
+}
+
+#play-history {
+    font-family: Consolas;
+    text-wrap: none;
+    margin-left: 30px;
+    margin-top: 10px;
+    float: left;
+}
+
+
+#page {
+}
+
+#main {
+    margin: 15px;
+    position:relative;
+}
+
+#player {
+    width: 400px;
+}
+
+#toolboxDiv {
+    font-size: 15px;
+    margin-left: 20px;
+    width: 200px;
+}
+
+#playlistDiv {
+    font-size: 15px;
+        margin-left: 20px;
+    width: 200px;
+}
+
+#statusDiv {
+
+}
+
+.topToolButton {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.bottomToolButton {
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+
+#npInfo {
+    margin-left: 12px;
+}
+
+#starDiv {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+}
+
+#star {
+    width: 30px;
+    height: 30px;
+}
+
+#now-playing {
+    font-size: 14px;
+    margin-bottom: 10px;
+    line-height: 16px;
+    height: 550px;
+}
+
+#now-playing a {
+    color: #eeeeee;
+    font-size: 18px;
+    line-height: 22px;
+    text-indent: 10px;
+}
+
+#player-image, #player-image .image {
+    position: relative;
+    margin-right: 10px;
+    margin-bottom: 15px;
+    margin-top: 10px;
+    height: 400px;
+    width: 400px;
+}
+
+#controls {
+    margin-left: 10px;
+    padding-left: 10px;
+}
+
+li {
+    padding-bottom: 3px;
+    list-style-type: none;
+    padding-left: 15px;
+    line-height: 20px;
+}
+
+a {
+    color: #eeeeee;
+}
+
+td {
+    vertical-align: top;
+}
+
+.bmButtons {
+    background-color: #474747;
+    text-indent: 0;
+    border: 0px solid #6D6D6D;
+    display: inline-block;
+    color: #eeeeee;
+    font-size: 15px;
+    height: 40px;
+    text-decoration: none;
+    text-align: center;
+    padding: 0px;
+    margin: 0px;
+    margin-bottom: 12px;
+    width: 100%;
+}
+
+.bmButtons:hover {
+    background-color: #6D6D6D;
+}
+
+.bmButtons:active {
+    position: relative;
+    top: 2px;
+}
+
+.bmButtonContainer {
+}
+
+.bmButtonLeft {
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+    float: left;
+    width: 49.25%;
+    border-right: 2px;
+}
+
+.bmButtonRight {
+    border-bottom-right-radius: 10px;
+    border-top-right-radius: 10px;
+    float: right;
+    width: 49.25%;
+}
+
+.toolButtons {
+    background-color: #474747;
+    text-indent: 0;
+    border: 0px solid #6D6D6D;
+    display: inline-block;
+    color: #eeeeee;
+    font-size: 15px;
+    height: 40px;
+    text-decoration: none;
+    text-align: center;
+    padding: 0px;
+    margin: 0px;
+    margin-bottom: 3px;
+    width: 100%;
+}
+
+.toolButtons:hover {
+    background-color: #6D6D6D;
+}
+
+.toolButtons:active {
+    position: relative;
+    top: 2px;
+}
+
+
+.mediaButtons {
+    background-color: #474747;
+    text-indent: 0;
+    border: 0px solid #6D6D6D;
+    display: inline-block;
+    color: #eeeeee;
+    font-size: 15px;
+    height: 50px;
+    text-decoration: none;
+    text-align: center;
+    padding: 0px;
+    margin: 0px;
+    margin-bottom: 3px;
+}
+
+.mediaButtons:hover {
+    background-color: #6D6D6D;
+}
+
+.mediaButtons:active {
+    position: relative;
+    top: 2px;
+}
+
+.topMediaButtons {
+    width: 131px;
+}
+
+.bottomMediaButtons {
+    width: 198px;
+}
+
+#backBtn {
+    border-top-left-radius: 10px;
+}
+
+#nextBtn {
+    border-top-right-radius: 10px;
+}
+
+#thumbsDownBtn {
+    border-bottom-left-radius: 10px;
+}
+
+#thumbsUpBtn {
+    border-bottom-right-radius: 10px;
+}

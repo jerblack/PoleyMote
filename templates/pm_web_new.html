@@ -1,0 +1,107 @@
+<!doctype html>
+
+<html>
+<head>
+    <title>PoleyMote</title>
+    <link rel="shortcut icon" href="/static/img/favicon.png">
+    <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png">
+    <link rel="apple-touch-startup-image" href="/static/img/apple-touch-icon-startup.png" />
+
+    <link rel="stylesheet" type="text/css" href="/static/pm.web.css" />
+    <script src="/static/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/pm.web.controls.js"></script>
+    <script type="text/javascript" src="/static/pm.web.js"></script>
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no, width=device-width">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <script>
+        (function () {
+            checkUser();
+        })();
+
+    </script>
+</head>
+<body>
+    <div id='toolbarContainer'>
+        <div id='toolbar'>
+            <div id="tbMenu" onclick="fillTopLevelMenu(); toggleMenuButton();">
+                <img src="/static/img/menu.png" id="tbMenuImg" />
+            </div>
+            <div id="tbBack" onclick="menuBack();">
+                <img src="/static/img/back.png" id="tbBackImg" />
+            </div>
+            <div id="tbRefresh" onclick="window.location.reload();">
+                <img src="/static/img/refresh.png" id="tbRefreshImg" />
+            </div>
+        </div>    
+    </div>
+
+    <div id="home">
+        <div id="doneButton">Done</div>
+
+        <div id="header">
+            <div id="headerPadding"></div>
+            <div id="artContainer" >
+                <div id="artDiv">
+                    <img src="/static/img/apple-touch-icon.png" id="art" />
+                </div>
+                <div id="starDiv">
+                    <img src="/static/img/star.png" id="star" />
+                </div>
+                <div id="sonosDiv" onclick="doneButton(); sendWebRequest('/cmd/connectsonos');">
+                    <div>Sonos is not connected.</div>
+                    <div>Tap here to fix.</div>
+                </div>
+            </div>
+        </div>        <div id="footer">
+            <div id="npCenter">
+                <div id="nowPlaying"></div>
+            </div>
+            <div id="npBorder"></div>
+            <div class="mediabutton">
+                <div class="buttonRow">
+                    <div class="btn" onclick="doneButton(); sendWebRequest('/cmd/spotify/thumbsup'); ">
+                            <img src="/static/img/heart.png" /></div>
+                    <div class="btn" onclick="doneButton(); sendWebRequest('/cmd/spotify/addbookmark+' + user); ">
+                            <img src="/static/img/pin.png" /></div>
+                    <div class="btn" onclick="doneButton(); sendWebRequest('/cmd/spotify/thumbsdown'); ">
+                            <img src="/static/img/trash.png" /></div>
+                </div>
+                <div class="buttonRow">
+                    <div class="btn" onclick="doneButton(); sendWebRequest('/cmd/spotify/skipback'); ">
+                            <img src="/static/img/last.png" /></div>
+                    <div class="btn" onclick="doneButton(); sendWebRequest('/cmd/spotify/playpause'); ">
+                            <img id="playpause" src="/static/img/play.png" /></div>
+                    <div class="btn" onclick="doneButton(); sendWebRequest('/cmd/spotify/nexttrack'); ">
+                            <img src="/static/img/next.png" /></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="menu">
+        <div id="menuEntries">
+        </div>
+    </div>
+
+
+    <div id='userContainer'>
+        <div id="user">
+            <p id="userText">Which bear are you?</p>
+            <img id="userImg" src="/static/img/userlogo.png" />
+            <div class="userButton" onclick="setUser('jeremy');">
+                <p>Jeremy</p></div>
+            <div class="userButton" onclick="setUser('maria');">
+                <p>Maria</p></div>
+        </div>
+    </div>
+
+    <div id="pinWPhome" onclick="pinWPhome()">
+        <img src="/static/img/apple-touch-icon-precomposed.png" width="320" height="320" />
+        <div style='margin-top: 40px'>
+            Now use the Windows Phone menu to pin this page to your home screen.
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,377 @@
+﻿@import url(http://fonts.googleapis.com/css?family=Noto+Sans);
+/* Also liked Noto Sans, Open Sans, Average Sans, varela round*/
+
+@media screen and (max-width:400px) {
+    @-ms-viewport {
+        width: 320px;
+    }
+}
+/* top-level */
+html {
+    -webkit-overflow-scrolling: touch;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    font-family: 'Noto Sans', sans-serif;
+}
+body {
+    background-color: rgb(40,40,40);
+    overflow-x: hidden;
+    padding: 0;
+    margin: 0;
+    border: 0;
+}
+#home {
+    position: relative;
+    height: 100%;
+    margin: 0 auto;
+    width: 360px;
+}
+#doneButton {
+    color: black;
+    font-size: 40px;
+    background-color: maroon;
+    width: inherit;
+    text-align: center;
+    vertical-align: middle;
+    top: 190px;
+    position: fixed;
+    display: none;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    z-index: 101;
+}
+#pinWPhome {
+    background-color: Highlight;
+    height: 100%;
+    width: 100%;
+    top: 0px;
+    left: 0px;
+    position: fixed;
+    color: black;
+    display: none;
+    z-index:1000
+}
+/* end of top-level */
+
+/* toolbar */
+#toolbarContainer {
+    width: 100%;
+    position: fixed;
+    top: 0;
+    z-index: 500  ;
+}
+#toolbar {
+    background-color: rgb(40,40,40);
+    width: 360px;
+    position: relative;
+    margin: 0 auto;
+}
+#tbMenuImg {
+    margin-top: 4px;
+    padding: 12px;
+    opacity: 0.7;
+}
+#tbBack {
+    display: none;
+    position: absolute;
+    top: 4px;
+    left: 54px;
+
+}
+#tbBack:active {
+    background-color: #6D6D6D;
+
+
+}
+#tbBackImg {
+    padding-left:14px;
+    padding-right:14px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    height:20px;
+            opacity:0.7;
+
+
+
+}
+#tbRefresh {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+#tbRefreshImg {
+    padding:12px;
+    opacity:0.7;
+}
+.tbMenuToggle {
+    background-color: #6D6D6D;
+}
+/* end of toolbar */
+
+/* menu*/
+#menu {
+    display: none;
+    background-color: rgba(71,71,71,0.95);
+    color:#eeeeee;
+    margin: 0 auto;
+    position: relative;
+    width: 360px;
+    
+}
+.menuButton {
+    position: relative;
+    font-size: 1.25em;
+    padding: 14px 25px;
+    text-indent: 6px;
+}
+.menuHidden {
+    display: none;
+}
+.menuBorder {
+    position: absolute;
+    bottom: 0;
+    margin: 0 auto;
+    width: 80%;
+    border-bottom: thin solid rgb(200,200,200);
+}
+#menuEntries {
+    width:          inherit;
+    position:       relative;
+    z-index:        100;
+}
+.menuMulti {
+    margin: 0;
+    border: 0;
+    font-size: 1em;
+    padding: 20px;
+    display: none;
+}
+#menuImageDiv {
+    padding: 0;
+    margin: 0;
+    width: inherit;
+    display: none;
+}
+.menuImages {
+    padding: 0;
+    margin: 0;
+    width: inherit;
+}
+
+/* end of menu*/
+
+/* Artist Information menu */
+#artistDiv {
+    padding: 0;
+    margin: 0;
+    width: inherit;
+}
+#artistImg {
+    width: inherit;
+    margin-top: 10px;
+    margin-bottom: -4px;
+}
+#artistName {
+    font-size: 1.8em;
+    text-align: center;
+    padding-top: 3px;
+}
+.artistData {
+    font-size: 1em;
+    text-align: center;
+    line-height: 20px;
+}
+#artistLinkbox {
+    width: inherit;
+}
+#artistLinks {
+    text-align: center;
+    position: relative;
+    margin: 0 auto;
+    padding: 0;
+}
+.artistLink {
+    text-align: center;
+    position: relative;
+    width: 25%;
+    padding: 0;
+    margin: 0 auto;
+    display: inline-block;
+}
+/* end of Artist Information menu */
+
+/* header*/
+
+#header { width: inherit; }
+
+#headerPadding { height: 52px; }
+
+#artContainer { position: relative; }
+
+#artDiv {
+    width: 100%;
+    position: absolute;
+    top:0;
+    left:0;
+}  
+#art {
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+#starDiv {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+#star {
+    width: 30px;
+    opacity: 0.8;
+}
+#sonosDiv {
+    position: absolute;
+    top: 20%;
+    left: 0;
+    background-color: rgba(30,0,0,0.8);
+    width: 100%;
+    padding-top: 8px;
+    height: 155px;
+    z-index: 99;
+    vertical-align: middle;
+    text-align: center;
+    font-size: 2.2em;
+    border-bottom: 2px solid;
+    border-top: 2px solid;
+    color: rgb(255,0,0);
+    display: none;
+}
+/* end of header*/
+
+/* footer*/
+
+/* end of footer*/
+
+
+#footer {
+    position: fixed;
+    bottom: 0;
+    width: inherit;
+    min-height: 10px;
+    background-color: rgba(30,30,30,0.7);
+}
+
+
+.mediabutton {
+    position: relative;
+    opacity:0.8;
+    width: inherit;
+    text-align: center;
+}
+
+.buttonRow {
+    position: relative;
+    width: inherit;
+}
+
+.btn {
+    display: inline-block;
+    width: 30%;
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.btn:hover {
+}
+
+.btn:active {
+    position: relative;
+    top: 2px;
+    background-color: #6D6D6D;
+}
+
+#npBorder {
+    margin: 15px auto;
+    width: 85%;
+    position: relative;
+    border-bottom: thin solid rgb(200,200,200);
+}
+
+#npCenter {
+    position: relative;
+    width:inherit;
+}
+
+#nowPlaying {
+margin: 0 auto;
+    color: rgb(220, 220, 220);
+    padding: 10px;
+    text-align: center;
+}
+
+.song {
+    font-size: 1em;
+}
+
+.about {
+    font-size: 0.9em;
+    padding-left: 4px;
+    padding-right: 14px;
+}
+
+/*end of Art and Star Container*/
+
+
+/*User Page*/
+#userContainer {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    left: 0px;
+    position: absolute;
+    z-index: 600;
+    background-color: rgb(55,55,55);
+    overflow: hidden;
+    display: none;
+}
+
+#user {
+    width: 200px;
+    margin: 0 auto;
+}
+
+#userText {
+    color: slategray;
+    text-align: center;
+    font-size: 20px;
+}
+
+#userImg {
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 70px;
+    margin-top: 30px;
+    width: 100%;
+    z-index: 601;
+}
+
+.userButton {
+    width: 200px;
+    display: block;
+    margin-top: 15px;
+    margin-left: auto;
+    margin-right: auto;
+    color: slategray;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 20px;
+    border: 2px solid slategray;
+    border-radius: 20px;
+}
+/*end of User Page*/
+

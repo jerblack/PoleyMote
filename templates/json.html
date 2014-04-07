@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="text/javascript" src="static/jquery.min.js"></script>
+
+ <script type="text/javascript">
+
+	function postJSON(){
+		var brick = {name:"jeremy",
+					 age:37,
+					 hair_color:'red'};
+$.ajax({ url: '/cmd/thumbsdown', headers: { "x-poleymote" : JSON.stringify(brickone)}});
+
+ }
+ </script>
+</head>
+<body>
+	hello from json
+</body>
+</html>

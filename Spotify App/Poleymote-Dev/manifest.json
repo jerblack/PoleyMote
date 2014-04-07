@@ -1,0 +1,38 @@
+{
+	"BundleType": "Application",
+	"BundleIdentifier": "poleymote-dev",
+	"BundleVersion": "0.1",
+	"AcceptedLinkTypes":[
+		"album",
+		"artist",
+		"track",
+		"playlist",
+		"user"
+	],
+	"AppIcon": {
+		"18x18": "pm.spapp.img.icon.png"
+	},
+	"AppName": {
+		"en": "PoleyMote-Dev"
+	},
+	"AppDescription": {
+		"en": "PoleyMote is a web remote and control center for Spotify."
+	},
+	"SupportedLanguages": [
+		"en"
+	],
+	"DefaultTabs": [
+		{
+			"arguments": "player",
+			"title": {
+				"en": "Player"
+			}
+		}
+	],
+	"RequiredPermissions": [
+		"https://*",
+		"http://*"
+	],
+	"RequiredInterface": "1",
+	"VendorIdentifier": "com.poleymote.dev"
+}

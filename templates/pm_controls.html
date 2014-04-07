@@ -1,0 +1,40 @@
+<!doctype html>
+
+<html>
+<head>
+    <title>PoleyMote</title>
+    <link rel="shortcut icon" href="/static/favicon.png">
+    <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+    <link rel="apple-touch-startup-image" href="/static/apple-touch-icon-startup.png" />
+
+    <link rel="stylesheet" type="text/css" href="/static/pm.web.controls.css" />
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+    <script type="text/javascript" src="/static/controls.js"></script>
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no, width=device-width">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes" /> 
+
+</head>
+<body>
+    <div id="dashboard" class="section">
+        <!--main view-->
+
+        <div id="main">
+            <div id="test"></div>
+
+            <div class="mediabutton">
+                <div class="btnImage" onclick="doneButton(); sendWebRequest('/spapp_cmd/thumbsup'); "><img src="/static/Love.png" /></div>
+                <div class="btnImage" onclick="doneButton(); sendWebRequest('/spapp_cmd/thumbsdown'); "><img src="/static/Trash.png" /></div>
+                <div class="btnImage" onclick="doneButton(); sendWebRequest('/spapp_cmd/skipback'); "><img src="/static/Previous.png" /></div>
+                <div class="btnImage" onclick="doneButton(); sendWebRequest('/spapp_cmd/playpause'); "><img id="playpause" src="/static/Play.png" /></div>
+                <div class="btnImage" onclick="doneButton(); sendWebRequest('/spapp_cmd/nexttrack'); "><img src="/static/Next.png" /></div>
+            </div>
+
+
+    </div>
+
+    <div id="doneButton">Done</div>
+
+</body>
+</html>

@@ -1,0 +1,96 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>PoleyMote</title>
+    <link rel="stylesheet" href="sp://import/css/adam.css">
+    <link rel="stylesheet" href="sp://import/css/api.css">
+    <link rel="stylesheet" href="pm.spapp.css">
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript" src="pm.spapp.js"></script>
+
+</head>
+<body>
+<div id="page">
+    <div id="main">
+        <table>
+            <tr>
+                <td>
+                    <div id="player">
+                        <div>
+                            <input class="mediaButtons topMediaButtons" type="button" id="backBtn" value="Skip Back" onclick="restartTrack()" />
+                            <input class="mediaButtons topMediaButtons" type="button" id="playBtn" value="Play/Pause" onclick="togglePause()" />
+                            <input class="mediaButtons topMediaButtons" type="button" id="nextBtn" value="Next Track" onclick="nextTrack()" />
+                        </div>
+                        <div>
+                            <input class="mediaButtons bottomMediaButtons" type="button" id="thumbsDownBtn" value="Thumbs Down" onclick="td()" />
+                            <input class="mediaButtons bottomMediaButtons" type="button" id="thumbsUpBtn" value="Thumbs Up" onclick="tu()" />
+                        </div>
+                        <div id="now-playing"><div id="starDiv"></div></div>
+
+                    </div>
+                </td>
+                <td>
+                    <div id="toolboxDiv">
+                        <div class="header">Tools</div>
+
+                        <input class="topToolButton toolButtons" type="button" value="Send Track Update" onclick="nowPlayingInfo()" />
+                        <input class="toolButtons" type="button" value="Delete Later" onclick="markDeleteLater()" />
+                        <input class="toolButtons" type="button" value="Cancel Delete Later" onclick="cancelDeleteLater()" />
+                        <input class="toolButtons" type="button" value="Delete this Artist" onclick="deleteArtist(player.track.album.artist.uri)" />
+                        <input class="toolButtons" type="button" value="Delete this Album" onclick="deleteAlbum(player.track.album.uri)" />
+                        <input class="toolButtons" type="button" value="De-dupe Shuffle Playlists" onclick="deDupeShuffle()" />
+                        <input class="toolButtons" type="button" value="Move to Electronic" onclick="moveElec()" />
+                        <input class="bottomToolButton toolButtons" type="button" value="Move to Ambient" onclick="moveAmbi()" />
+
+                        <div class="header">Jeremy's Bookmarks</div>
+                        <div>
+                            <div class="">
+                                <input class="bmButtonLeft bmButtons" type="button" value="Add" onclick="addToBookmarks('jeremy')" />
+                            </div>
+                            <div class="">
+                                <input class="bmButtonRight bmButtons" type="button" value="Play" onclick="playBookmark('jeremy')" />
+                            </div>
+                        </div>
+
+
+                        <div class="header">Maria's Bookmarks</div>
+
+                        <div class="bmButtonContainer">
+                            <div class="">
+                                <input class="bmButtonLeft bmButtons" type="button" value="Add" onclick="addToBookmarks('maria')" />
+                            </div>
+                            <div class="">
+                                <input class="bmButtonRight bmButtons" type="button" value="Play" onclick="playBookmark('maria')" />
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div id="playlistDiv">
+                        <div class="header">Select a playlist</div>
+                        <input class="topToolButton toolButtons" type="button" value="Play Shuffle Playlists" onclick="playShufflePlaylists()" />
+                        <input class="toolButtons" type="button" value="Starred" onclick="playStarred()" />
+                        <div id="favPlaylists"></div>
+                    </div>
+                </td>
+                <td>
+                    <div id="statusDiv">
+                        <div id="serverstatus">
+                            <p>|Server Status|</p>
+                            <div style="margin-left:20px;">
+                                <p id=url>Unknown server URL</p>
+                                <p id=status>Unknown connection status</p>
+                            </div>
+                        </div>
+                        <div id="play-history">
+                            <div>|PoleyMote Activity Log|</div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+</body>
+</html>
