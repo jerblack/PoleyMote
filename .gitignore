@@ -1,3 +1,11 @@
+Spotify App/Apps-tutorial/
+Spotify App/boilerplate-app/
+Spotify App/kitchensink/
+pm_settings.ini
+*.db
+static/output.png
+.gitignore
+
 #################
 ## Eclipse
 #################
@@ -213,3 +221,4 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+static/output.png
