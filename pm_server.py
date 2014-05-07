@@ -1,5 +1,8 @@
 # -*- coding: utf_8 -*-
 #!/usr/bin/env python
+# mosaic uri local file paths
+# spotify:mosaic:localfileimage%3AZ%253A%255CiTunes%255CiTunes%2520Media%255CMusic%255CHundred%2520Hands%255CIndieFeed_%2520Alternative%2520_%2520Modern%2520Rock%2520Mus%255CDisaster.mp3
+
 
 from gevent import monkey
 monkey.patch_all()
@@ -24,6 +27,7 @@ ip = socket.gethostbyname(socket.gethostname())
 port = 80
 sp_app_name = 'poleymote:'
 local_delete_folder = 'Z:/iTunes/Deleted/'
+local_archive_folder = 'Z:/iTunes/Archive/'
 pm_db_path = "poleymote.db"
 
 
@@ -78,13 +82,14 @@ def resetDefaultConfig():
                          ]
                         ,
                     "Shuffle_Playlists":   
-                        [{"Name":"Spotify Library 1", "uri":"spotify:user:jerblack:playlist:5XnrfPufI8J3WuDXSJrj3m"}, #spotify library 1
-                         {"Name":"Spotify Library 2", "uri":"spotify:user:jerblack:playlist:3L5VxdSBxnUPVhwXCoThiG"}, #spotify library 2
-                         {"Name":"Spotify Library 3", "uri":"spotify:user:jerblack:playlist:3HESEQC2UvmA1Ap1q4Q2m1"}, #spotify library 3
-                         {"Name": "Electronic/Dance", "uri": "spotify:user:jerblack:playlist:0m2cGNVm9Zp6l9e09SiffL"},
-                         {"Name":"iTunes Music", "uri":"spotify:user:jerblack:playlist:1CgDrOOVdpF34v9QaRvxkq"}], #Electronic/Dance
-                         # {"Name":"iTunes Music", "uri":"spotify:user:jerblack:playlist:1EbN3FxalGhEojRxpXZuoA"}, #local music
-                         
+                        [
+                         {"Name":"Electronic/Dance", "uri": "spotify:user:jerblack:playlist:0m2cGNVm9Zp6l9e09SiffL"},
+                         {"Name":"Spotify Library 1", "uri":"spotify:user:jerblack:playlist:5XnrfPufI8J3WuDXSJrj3m"},
+                         {"Name":"Spotify Library 2", "uri":"spotify:user:jerblack:playlist:3L5VxdSBxnUPVhwXCoThiG"},
+                         {"Name":"Spotify Library 3", "uri":"spotify:user:jerblack:playlist:3HESEQC2UvmA1Ap1q4Q2m1"},
+						 {"Name":"iTunes Music", "uri":"spotify:user:jerblack:playlist:1CgDrOOVdpF34v9QaRvxkq"}
+                         ],
+                                                  
                     "Shuffle_Playlist_Size": 50, #drop-down should have increments of 50
                     "Automatically_add_music_to_queue_when_nearing_end": True
                     },
@@ -171,8 +176,12 @@ def log(summary,text):
             l.write(s + "\n")
             l.close()
         except UnicodeEncodeError:
-            print '| Log Failure | Failed to decode log request, likely non-ascii character in track data. This only affects logging on the server.'
-
+            s = '| ' + summary + ' | ' + repr(text)
+            s = s.decode('ascii','replace') 
+            print s
+            l = open("static/PoleyMote.log","a")
+            l.write(s + "\n")
+            l.close()
         
 #----------------#
 # End of Logging #
@@ -225,8 +234,8 @@ class cmd:
         web.header('Access-Control-Allow-Credentials', 'true')
         web.header('Access-Control-Allow-Methods', 'POST')
         log("Calling","POST '/cmd/"+cmd+"' -> handleCMD()")
-        print web.input()
-        print type(web.input())
+        # print web.input()
+        # print type(web.input())
         return handleCMD(cmd, web.input())
         
 
@@ -243,13 +252,13 @@ def handleCMD(cmd,opt):
 
     elif (cmd == "connectsonos"):
         log("handleCMD","'/cmd/connectsonos -> reconnect to the Sonos")
-        connectSonos()
-        return 0
+        from pm_server_airfoil import connectSonos as cs
+        cs()
 
     elif (cmd == "disconnectsonos"):
         log("handleCMD","'/cmd/disconnectsonos -> disconnect from the Sonos")
-        disconnectSonos()
-        return 0
+        from pm_server_airfoil import disconnectSonos as ds
+        ds()
 
     elif (cmd == "artistinfo"):
         log("handleCMD","'/cmd/artistinfo -> artist info page requested from PoleyMote client")
@@ -282,7 +291,7 @@ def handleCMD(cmd,opt):
         cmds = cmd.split('+')        
         user = cmds[1].lower()
         bm = json.dumps(opt)
-        print opt
+        # print opt
         #f = open('dict.txt','w')
         #f.write(str(opt))
         ##f.write('bm type: ', type(bm))
@@ -308,11 +317,11 @@ def handleCMD(cmd,opt):
 
     elif (cmd == "thumbsdown"):
         log("handleCMD","'/cmd/thumbsdown' -> thumbs down called on local file")
-        thumbsDown(opt.spURL)
+        thumbsDown(opt)
 
     elif (cmd == "thumbsup"):
         log("handleCMD","'/cmd/thumbsup' -> thumbs up called on local file")
-        thumbsUp(opt.spURL)
+        thumbsUp(opt)
 
     elif (cmd == "archive"):
         log("handleCMD","'/cmd/archive' -> track archived")
@@ -323,40 +332,96 @@ def handleCMD(cmd,opt):
         return json.dumps(getAlbumsFromArtist(opt))
 
 
-      
+# spotify:local:Butterfly+Bones:BIRP%21+March+2010:%3c3:228
+def archive(opt):
+    t = opt['trackURI']
+    pl = json.loads(opt['plURIs'])
+    # print '--NAME--> ', opt['name']
+    # print '--TRACK URI--> ',opt['trackURI']
+    # for p in pl:
+    #     print p['name'], ' --> ', p['uri']
+    conn = sql.connect(pm_db_path)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS archive(track TEXT,spURI TEXT, playlists TEXT, date TEXT);''')
+    c.execute('''INSERT INTO ARCHIVE VALUES(?,?,?,date('now'));''', (opt['name'],opt['trackURI'],opt['plURIs']))
+    conn.commit()
+    conn.close()
+    if (t.find('spotify:local:'!=-1)):
+        if not os.path.isdir(local_archive_folder):
+            os.makedirs(local_archive_folder)
+        shutil.move(localTrackPath,local_archive_folder)
+        log("thumbsDown","Moving '"+localTrackPath+"' to '"+local_archive_folder+"'")
+    # select * from archive where date < date('now','+1 day')
 
+# spotify:local:Butterfly+Bones:BIRP%21+March+2010:%3c3:228
 
-def thumbsUp(trackURI):
-    localTrackPath = getLocalPath(trackURI)
-    h = pconfig['Heart']
-    if (h['Rate_5_star_in_iTunes'] == True):
+def thumbsUp(opt):
+    # h = pconfig['Heart']
+    name, artist, album = '','',''
+    trackURI = opt['spURL']
+    if (opt['spURL'].find('spotify:local:')==-1):
+        name, artist, album = opt['name'], opt['artist'], opt['album']
+    else:
+        s = urllib.unquote(opt['spURL'].replace('spotify:local:','').replace(":","|||")).replace('+',' ').encode('ascii','replace').replace('??','?').split('|||')
+        artist = s[0]
+        album = s[1]
+        name = s[2]
+        localTrackPath = getLocalPath(trackURI)
+        # if (h['Rate_5_star_in_iTunes'] == True):
+        # threading.Timer(1, itunesThumbsUp(localTrackPath)).start()
+        # print trackURI
+        # print localTrackPath
         itunesThumbsUp(localTrackPath)
         log("thumbsUp","Rated 5-stars in '"+localTrackPath+"' in iTunes")
-    if (h['Rate_5_star_in_local_tag'] == True):
+        # if (h['Rate_5_star_in_local_tag'] == True):
         rateLocalFile(localTrackPath, 252)
         log("thumbsUp","Rated 5-stars in '"+localTrackPath+"' in local file")
+    conn = sql.connect(pm_db_path)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS thumbs_up(track TEXT, artist TEXT, album TEXT, trackURI TEXT, date TEXT);''')
+    c.execute('''INSERT INTO thumbs_up VALUES(?,?,?,?,date('now'));''', (name,artist,album,trackURI))
+    conn.commit()
+    conn.close()
 
-
-def thumbsDown(trackURI):
-    localTrackPath = getLocalPath(trackURI)
-    d = pconfig['Delete']
-    if (d['Move_to_purgatory_folder'] == True):
-        if not os.path.isdir(local_delete_folder):
-            os.makedirs(local_delete_folder)
-        shutil.move(localTrackPath,local_delete_folder)
+def thumbsDown(opt):
+    trackURI = opt['spURL']
+    name, artist, album = '','',''
+    if (opt['spURL'].find('spotify:local:')==-1):
+        name, artist, album = opt['name'], opt['artist'], opt['album']
+    else:
+        s = urllib.unquote(opt['spURL'].replace('spotify:local:','').replace(":","|||")).replace('+',' ').encode('ascii','replace').replace('??','?').split('|||')
+        artist = s[0]
+        album = s[1]
+        name = s[2]
+        localTrackPath = getLocalPath(trackURI)
+        # d = pconfig['Delete']
+        # if (d['Move_to_purgatory_folder'] == True):
         log("thumbsDown","Moving '"+localTrackPath+"' to '"+local_delete_folder+"'")
-    elif (d['Delete_local_file'] == True):
-        os.remove(localTrackPath);
-        log("thumbsDown","Deleted file '"+localTrackPath+"'")
-    elif (d['Rate_1_star_in_local_tag'] == True):
-        rateLocalFile(localTrackPath,1)
-        log("thumbsDown","Rated 1 star '"+localTrackPath+"' in local file")
-    if (d['Delete_from_iTunes'] == True):
+        # elif (d['Delete_local_file'] == True):
+        #     os.remove(localTrackPath);
+        #     log("thumbsDown","Deleted file '"+localTrackPath+"'")
+        # elif (d['Rate_1_star_in_local_tag'] == True):
+        #     rateLocalFile(localTrackPath,1)
+        #     log("thumbsDown","Rated 1 star '"+localTrackPath+"' in local file")
+        # if (d['Delete_from_iTunes'] == True):
+        deleteLocalFile(localTrackPath)
         deleteFromItunes(localTrackPath)
+
         log("thumbsDown","Deleting '"+localTrackPath+"' from iTunes")
-    elif (d['Rate_1_star_in_iTunes'] == True):
-        itunesThumbsDown(localTrackPath)
-        log("thumbsDown","Rated 1 star '"+localTrackPath+"' in iTunes")
+        # elif (d['Rate_1_star_in_iTunes'] == True):
+        #     itunesThumbsDown(localTrackPath)
+        #     log("thumbsDown","Rated 1 star '"+localTrackPath+"' in iTunes")
+    conn = sql.connect(pm_db_path)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS thumbs_down(track TEXT, artist TEXT, album TEXT, trackURI TEXT, date TEXT);''')
+    c.execute('''INSERT INTO thumbs_down VALUES(?,?,?,?,date('now'));''', (name,artist,album,trackURI))
+    conn.commit()
+    conn.close()
+
+def deleteLocalFile(localTrackPath):
+    if not os.path.isdir(local_delete_folder):
+        os.makedirs(local_delete_folder)
+    shutil.move(localTrackPath,local_delete_folder)
 
 def rateLocalFile(trackURI,rat):
     """
@@ -373,9 +438,6 @@ def rateLocalFile(trackURI,rat):
         t.add(POPM(email = u'no@email', rating = rat, count = 1))
     t.update_to_v23()
     t.save(p, 2, 3)
-
-
-
 
 
 def increasePlayCount(trackURI):
@@ -583,14 +645,13 @@ def getLocalPath(spURL):
     """
     global pm_db_path
     log("Calling","getLocalPath() -> Using Spotify uri to find path of local file in index")
-    s = urllib.unquote(spURL.replace('spotify:local:','').replace(":","|||")).replace('+',' ').encode('ascii','replace').replace('??','?').split('|||')
-    info = []
-    for i in s:
-        info.append(i.split('?'))
-
-    artist = info[0][0]
-    album = info[1][0]
-    title = info[2][0]
+    m = urllib.unquote(spURL.replace('spotify:local:','').replace(":","|||")).replace('+',' ').encode('ascii','replace').replace('??','?').split('|||')
+    s = []
+    for i in m:
+        s.append((i.split('?'))[0])
+    artist = '%'+s[0]+'%'
+    album = '%'+s[1]+'%'
+    title = '%'+s[2]+'%'
     
     sec = int(s[3]) % 60
     if sec < 10:
@@ -599,29 +660,24 @@ def getLocalPath(spURL):
         sec = str(sec)
     duration = str(int(s[3]) / 60) + ":" + sec
     log('getLocalPath',"Called for '" + spURL + "'")
-    log('getLocalPath',"Searching index using artist: '" + urllib.unquote(artist) + "', album: '" + urllib.unquote(album) + "', title: '" + urllib.unquote(album) + "', duration: '" + duration + "'")
+    log('getLocalPath',"Searching index using artist: '" + urllib.unquote(s[0]) + "', album: '" + urllib.unquote(s[1]) + "', title: '" + urllib.unquote(s[2]) + "', duration: '" + duration + "'")
 
     conn = sql.connect(pm_db_path)
     c = conn.cursor()
-    c.execute('''SELECT path FROM music WHERE artist = ? AND album = ? AND title = ? AND duration = ?;''', (artist, album, title, duration))
+    c.execute('SELECT path FROM music WHERE artist LIKE ? AND album LIKE ? AND title LIKE ? AND duration = ?;',(artist,album,title,duration))
     r = c.fetchone()
     conn.close()
-    log('getLocalPath',"Result: '" + r[0] + "'")
-    return r[0]
+    # print ["called getLocalPath", s, spURL, r]
+    try:
+        log('getLocalPath',"Result: '" + r[0] + "'")
+        return r[0]
+    except Exception, e:
+        log('Error','Error in getLocalPath()')
+        return ''
 
-def archive(opt):
-    t = opt['trackURI']
-    pl = json.loads(opt['plURIs'])
-    print t
-    for i in pl:
-        print i
-    conn = sql.connect(pm_db_path)
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS archive(track TEXT, playlists TEXT, date TEXT);''')
-    c.execute('''INSERT INTO ARCHIVE VALUES(?,?,date('now'));''', (opt['trackURI'],opt['plURIs']))
-    conn.commit()
-    conn.close()
-    # select * from archive where date < date('now','+1 day')
+
+
+
 
 #----------------------------------------#
 # End of Track and Art Metadata Handling #

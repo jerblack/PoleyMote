@@ -20,8 +20,9 @@ def getPID(localPath):
     p = localPath
     if p.find('file://') == -1:
         p = (urllib.quote((p.replace("\\",'/'))[5:])).replace("%21","!")
+    p = (urllib.unquote(p)).replace(' ','%20')
     f = getiTunesLibraryXMLPath()
-
+    # print 'p = ',p
     #print "Reading iTunes xml file..."
     x = plistlib.readPlist(f)
     tracks = x['Tracks']
@@ -31,22 +32,27 @@ def getPID(localPath):
         if p in tracks[key]['Location']:
             pid = tracks[key]['Persistent ID']
     print '| Calling | getPID() -> iTunes Persistent ID for track is ' + pid
+
     # https://stackoverflow.com/questions/6727041/itunes-persistent-id-music-library-xml-version-and-itunes-hex-version
     hi_lo = struct.unpack('!ii', binascii.a2b_hex(pid))
     return [hi_lo[0],hi_lo[1]]
 
 
 def deleteFromItunes(localPath):
-    win32com.client.pythoncom.CoInitialize()
-    iTunes = win32com.client.Dispatch("iTunes.Application")
-    sources = iTunes.Sources
-    library = sources.ItemByName("Library")
-    music = library.Playlists.ItemByName("Music")
-    allTracks = music.Tracks
-    pid = getPID(localPath)
-    track = allTracks.ItemByPersistentID(pid[0],pid[1])
-    track.Delete()
+    try:
+        win32com.client.pythoncom.CoInitialize()
+        iTunes = win32com.client.Dispatch("iTunes.Application")
+        sources = iTunes.Sources
+        library = sources.ItemByName("Library")
+        music = library.Playlists.ItemByName("Music")
+        allTracks = music.Tracks
+        pid = getPID(localPath)
+        track = allTracks.ItemByPersistentID(pid[0],pid[1])
+        track.Delete()
+    except AttributeError:
+        print '| Error | Failed to delete local file from iTunes database'
     win32com.client.pythoncom.CoUninitialize()
+
 
 
 def itunesThumbsDown(localPath):

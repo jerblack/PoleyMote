@@ -9,7 +9,6 @@ def setupAirfoil(source):
     connectSpotify()
 
 def connectSonos():
-    #ensureAirfoilRunning()
     win32com.client.pythoncom.CoInitialize()
     airfoilapp = Dispatch("RogueAmoeba.Airfoil")
     speakerBox = airfoilapp.GetSpeakers()

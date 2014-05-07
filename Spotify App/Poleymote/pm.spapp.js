@@ -301,6 +301,9 @@ function handleMsg(cmd) {
             case 'playshuffleplaylists':
                 playShufflePlaylists();
                 break;
+            case 'archivetrack':
+                archiveTrack();
+                break;
         }
     }
 }
@@ -755,17 +758,26 @@ function deleteTrack(trackURI) {
         t.starred = false;
         plArray.forEach(function (plURL) {
             var pl = models.Playlist.fromURI(plURL, function (pl) {
-                if (pl.indexOf(models.Track.fromURI(t.uri)) != -1) {
+                // if (pl.indexOf(models.Track.fromURI(t.uri)) != -1) { <-- what was
+                if (pl.indexOf(t) != -1) { // <-- what is
                     pl.remove(t.uri);
 
-                    if (trackURI.search('spotify:local:') == 0) {
-                        log('Thumbs Down', 'Sending Thumbs Down on local music file to PoleyMote server')
-                        var npData = { "spURL": trackURI };
-                        $.post("http://" + serverIP + "/cmd/thumbsdown", npData);
-                    } else {
-                        log('Thumbs Down', ['Song: ' + t.name.decodeForText(), 'Artist: ' + t.artists[0].name.decodeForText(), 'Album: ' + t.album.name.decodeForText()]);
-                        log('Thumbs Down', ['Removed \'' + t + '\' from Shuffle and Favorite playlists']);
-                    }}})})});}
+                    var npData
+                    if (trackURI.search('spotify:local:')!=-1){
+                        npData = {  
+                                    "spURL": trackURI };}
+                    else {
+                        npData = {   "spURL": trackURI,
+                                     "name": t.name.decodeForText(),
+                                     "artist": t.artists[0].name.decodeForText(),
+                                     "album": t.album.name.decodeForText()
+                                 }
+                            log('Thumbs Down', ['Song: ' + t.name.decodeForText(), 'Artist: ' + t.artists[0].name.decodeForText(), 'Album: ' + t.album.name.decodeForText()]);
+                        }
+
+                    $.post("http://" + serverIP + "/cmd/thumbsdown", npData);
+                    log('Thumbs Down', ['Removed \'' + t + '\' from Shuffle and Favorite playlists']);
+                    }})})});}
 
 
 function td() {
@@ -778,36 +790,38 @@ function tu() {
 
 
 function thumbsDown(trackURI) {
-    if (player.context == coachella) {
-        models.Playlist.fromURI(cdel).add(player.track.uri);
-    }
     deleteTrack(trackURI);
     nextTrack();
 
 }
 
 function thumbsUp(trackURI) {
-    if (player.context == coachella) {
-        models.Playlist.fromURI(csav).add(player.track.uri);
-    }
     models.Track.fromURI(trackURI, function (t) {
         t.starred = true;
         nowPlaying();
-
-        if (trackURI.indexOf('spotify:local:') == 0) {
-            log('Thumbs Up', 'Sending Thumbs Up on local music file to PoleyMote server')
-            var npData = { "spURL": trackURI };
-            $.post("http://" + serverIP + "/cmd/thumbsup", npData);
-        }
-        else 
-        {
+        console.log(t);
+        var npData
+        if (trackURI.search('spotify:local:')!=-1){
+            npData = {  
+                        "spURL": trackURI };}
+        else {
+            npData = {   "spURL": trackURI,
+                         "name": t.name.decodeForText(),
+                         "artist": t.artists[0].name.decodeForText(),
+                         "album": t.album.name.decodeForText()
+                     }
             log('Thumbs Up', ['Song: ' + t.name.decodeForText(), 'Artist: ' + t.artists[0].name.decodeForText(), 'Album: ' + t.album.name.decodeForText()]);
-            log('Thumbs Up', ['Successfully starred \'' + t + '\'']);
         }
+
+        $.post("http://" + serverIP + "/cmd/thumbsup", npData);
+        log('Thumbs Up', ['Successfully starred \'' + t + '\'']);
     })
 }
 
-function archiveTrack(trackURI) {
+function archiveTrack() {
+    var tName = player.track.toString();
+    var tUri = player.track.uri;
+    var track = player.track;
     var a = config.Archive;
     var plArray = [];
 
@@ -815,44 +829,39 @@ function archiveTrack(trackURI) {
         config.Playlists.Shuffle_Playlists.forEach(function (p) {
             if (plArray.indexOf(p.uri) == -1) {
                 plArray.push(p.uri);
-            }
-        });
-    }
+            }});}
 
-    if (a.Archive_from_all_favorite_playlists == true) {
+    if (a.Archive_from_all_favorite_playlists) {
         config.Playlists.Favorite_Playlists.forEach(function (p) {
             if (plArray.indexOf(p.uri) == -1) {
                 plArray.push(p.uri);
-            }        });
-    }
+            }});}
 
-    if (a.Archive_from_current_playlist == true) {
+    if (a.Archive_from_current_playlist) {
         if (player.context != null) {
             if (player.context.search("spotify:internal:temp_playlist") != 0) {
-            if (plArray.indexOf(player.context) == -1) {
-                plArray.push(player.context);
-            }            }
-        }
-    }
+                if (plArray.indexOf(player.context) == -1) {
+                    plArray.push(player.context);
+            }}}}
+
     var plResultsArray = [];
-    models.Track.fromURI(trackURI, function (t) {
-        log('Archive', 'Archiving track ' + t.name);
-
-        plArray.forEach(function (plURL) {
-            var pl = models.Playlist.fromURI(plURL, function (pl) {
-                if (pl.indexOf(trackURI) != -1) {
-                    plResultsArray.push(plURL);
-                }
-            })
+    log('Archive', 'Archiving track ' + tName);
+    plArray.forEach(function (plURI) {
+        models.Playlist.fromURI(plURI, function (pl) {
+            if (pl.indexOf(track) != -1) {
+                plResultsArray.push({'name': pl.name, 'uri': plURI});
+                pl.remove(t.uri);
+            }
         })
-        var npData = {
-            "trackURI": trackURI,
-            "plURIs": JSON.stringify(plResultsArray)
-        };
-        console.log(npData);
-        $.post("http://" + serverIP + "/cmd/archive", npData);
-    });
-
+    })
+    var npData = {
+        "name": tName,
+        "trackURI": tUri,
+        "plURIs": JSON.stringify(plResultsArray)
+    };
+    console.log(npData);
+    $.post("http://" + serverIP + "/cmd/archive", npData);
+    nextTrack();
 
 }
 

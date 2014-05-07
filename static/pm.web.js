@@ -180,6 +180,7 @@ function fillPlaylistMenu() {
 function fillToolsMenu() {
     var menu = [
 
+['sendWebRequest("/cmd/spotify/archivetrack");'                      , ' Archive Track'               , 1],
 ['sendWebRequest("/cmd/connectsonos");'                 , ' Connect Sonos'               , 1],
 ['sendWebRequest("/cmd/disconnectsonos");'              , ' Disconnect Sonos'            , 1],
 ['sendWebRequest("/cmd/spotify/deletelater");'          , ' Delete Later'                , 1],
