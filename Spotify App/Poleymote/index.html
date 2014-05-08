@@ -27,23 +27,26 @@
                             <input class="mediaButtons bottomMediaButtons" type="button" id="thumbsUpBtn" value="Thumbs Up" onclick="tu()" />
                         </div>
                         <div id="now-playing"><div id="starDiv"></div></div>
+                        <div id="toolboxDiv">
+                            <input class="mediaButtons bottomMediaButtons" type="button" id ="topleft" value="Send Track Update" onclick="nowPlayingInfo()" />
+                            <input class="mediaButtons bottomMediaButtons" type="button" id ="topright" value="Archive Track" onclick="archiveTrack()" />
+                            <input class="mediaButtons bottomMediaButtons" type="button" value="Delete Later" onclick="markDeleteLater()" />
+                            <input class="mediaButtons bottomMediaButtons" type="button" value="Cancel Delete Later" onclick="cancelDeleteLater()" />
+                            <input class="mediaButtons bottomMediaButtons" type="button" value="Delete this Artist" onclick="deleteArtist(player.track.album.artist.uri)" />
+                            <input class="mediaButtons bottomMediaButtons" type="button" value="Delete this Album" onclick="deleteAlbum(player.track.album.uri)" />
+                            <input class="mediaButtons bottomMediaButtons" type="button" id ="bottomleft" value="De-dupe Shuffle Playlists" onclick="deDupeShuffle()" />
+                            <input class="mediaButtons bottomMediaButtons" type="button" id ="bottomright" value="Process '~Delete Later'" onclick="processDeleteQueue()" />
 
+                        </div>
                     </div>
                 </td>
                 <td>
-                    <div id="toolboxDiv">
-                        <div class="header">Tools</div>
+                    <div id="playlistDiv">
+                        <div class="header">Select a playlist</div>
+                        <input class="topToolButton toolButtons" type="button" value="Play Shuffle Playlists" onclick="playShufflePlaylists()" />
+                        <input class="toolButtons" type="button" value="Starred" onclick="playStarred()" />
+                        <div id="favPlaylists"></div>
 
-                        <input class="topToolButton toolButtons" type="button" value="Send Track Update" onclick="nowPlayingInfo()" />
-                        <input class="toolButtons" type="button" value="Archive Track" onclick="archiveTrack()" />
-                        <input class="toolButtons" type="button" value="Delete Later" onclick="markDeleteLater()" />
-                        <input class="toolButtons" type="button" value="Cancel Delete Later" onclick="cancelDeleteLater()" />
-                        <input class="toolButtons" type="button" value="Delete this Artist" onclick="deleteArtist(player.track.album.artist.uri)" />
-                        <input class="toolButtons" type="button" value="Delete this Album" onclick="deleteAlbum(player.track.album.uri)" />
-                        <input class="toolButtons" type="button" value="De-dupe Shuffle Playlists" onclick="deDupeShuffle()" />
-                        <input class="toolButtons" type="button" value="Process '~Delete Later'" onclick="processDeleteQueue()" />
-                        <input class="toolButtons" type="button" value="Move to Electronic" onclick="moveElec()" />
-                        <input class="bottomToolButton toolButtons" type="button" value="Move to Ambient" onclick="moveAmbi()" />
 
                         <div class="header">Jeremy's Bookmarks</div>
                         <div>
@@ -66,14 +69,6 @@
                                 <input class="bmButtonRight bmButtons" type="button" value="Play" onclick="playBookmark('maria')" />
                             </div>
                         </div>
-                    </div>
-                </td>
-                <td>
-                    <div id="playlistDiv">
-                        <div class="header">Select a playlist</div>
-                        <input class="topToolButton toolButtons" type="button" value="Play Shuffle Playlists" onclick="playShufflePlaylists()" />
-                        <input class="toolButtons" type="button" value="Starred" onclick="playStarred()" />
-                        <div id="favPlaylists"></div>
                     </div>
                 </td>
                 <td>

@@ -764,14 +764,13 @@ function deleteTrack(trackURI) {
 
                     var npData
                     if (trackURI.search('spotify:local:')!=-1){
-                        npData = {  
-                                    "spURL": trackURI };}
+                        npData = {  "spURL": trackURI };
+                        log('Thumbs Down',['on local track with URI',trackURI]);}
                     else {
                         npData = {   "spURL": trackURI,
                                      "name": t.name.decodeForText(),
                                      "artist": t.artists[0].name.decodeForText(),
-                                     "album": t.album.name.decodeForText()
-                                 }
+                                     "album": t.album.name.decodeForText()}
                             log('Thumbs Down', ['Song: ' + t.name.decodeForText(), 'Artist: ' + t.artists[0].name.decodeForText(), 'Album: ' + t.album.name.decodeForText()]);
                         }
 

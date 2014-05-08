@@ -71,9 +71,19 @@ body {
 }
 
 #toolboxDiv {
-    font-size: 15px;
-    margin-left: 20px;
-    width: 200px;
+}
+#topleft {
+    border-top-left-radius: 3px;
+}
+#topright {
+    border-top-right-radius: 3px;
+}
+
+#bottomleft {
+    border-bottom-left-radius: 3px;
+}
+#bottomright {
+    border-bottom-right-radius: 3px;
 }
 
 #playlistDiv {

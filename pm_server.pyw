@@ -7,7 +7,7 @@
 from gevent import monkey
 monkey.patch_all()
 from gevent.pywsgi import WSGIServer
-import web, win32com, time, pythoncom, threading, shutil, os, sys, urllib, requests, json, plistlib, socket, unicodedata
+import codecs, warnings, web, win32com, time, pythoncom, threading, shutil, os, sys, urllib, requests, json, plistlib, socket, unicodedata
 import sqlite3 as sql
 
 from twisted.internet import reactor
@@ -18,8 +18,8 @@ from mutagen import File
 from mutagen.id3 import ID3, POPM, PCNT
 
 # from pm_server_airfoil import disconnectSonos, setupAirfoil, connectSonos, ensureAirfoilRunning, isSonosConnected
-from pm_server_itunes import getiTunesLibraryXMLPath, getPID, deleteFromItunes, itunesThumbsDown, itunesThumbsUp
-
+from pm_server_local import getiTunesLibraryXMLPath, getPID, getPath, deleteFromItunes, deleteLocalFile, rateLocalFile, increasePlayCount, itunesThumbsDown, itunesThumbsUp
+from pm_server_logging import log
 web.config.debug = True
 
 #ip = '192.168.0.50'
@@ -46,21 +46,21 @@ pconfig = {}
 
 def readConfig():
     global pconfig
-    log('Calling',"readConfig() -> Reads 'pm_settings.ini' into pconfig object")
+    log('readConfig',"Reading 'pm_settings.ini' into pconfig object")
     #try:
     #    f = open("pm_settings.ini")
     #    pconfig = eval(f.read())
     #    f.close()
     #    return pconfig
     #except IOError:
-    log('readConfig',"'pm_settings.ini' not found; calling resetDefaultConfig()")
+    log('readConfig',"'pm_settings.ini' not found; calling resetDefaultConfig")
 
     return resetDefaultConfig()
     
 
 def resetDefaultConfig():
     global pconfig
-    log('Calling',"resetDefaultConfig() -> Changing all settings to default values, creating new 'pm_settings.ini'")
+    log('resetDefaultConfig',"Changing all settings to default values, creating new 'pm_settings.ini'")
 
     defaults = { "Local": {
                     "Use_iTunes": True,
@@ -73,8 +73,7 @@ def resetDefaultConfig():
                     },
                 "Playlists": {
                     "Favorite_Playlists":  # favorites each get a button under 'play a new playlist' in remote and dash
-                        [{"Name":"Coachella :)", "uri":"spotify:user:jerblack:playlist:0WAbJXwfOJbwU7nhz8aOKh"}, 
-                         {"Name":"Electronic/Dance", "uri":"spotify:user:jerblack:playlist:0m2cGNVm9Zp6l9e09SiffL"},
+                        [{"Name":"Electronic/Dance", "uri":"spotify:user:jerblack:playlist:0m2cGNVm9Zp6l9e09SiffL"},
                          {"Name":"Ambient/Downtempo", "uri":"spotify:user:jerblack:playlist:7a9mjhowih1tHU94Yve7lx"},
                          {"Name":"24 Hours - The Starck Mix","uri":"spotify:user:jerblack:playlist:1QDcvAyuxjckaGuRueUSVe"},
                          {"Name":"iTunes Music", "uri":"spotify:user:jerblack:playlist:1CgDrOOVdpF34v9QaRvxkq"},
@@ -157,40 +156,6 @@ def resetDefaultConfig():
 #--------------------------------------------------------------------------------------------------------------------------------------------------#
 
 
-#---------#
-# Logging #
-#---------#
-def log(summary,text):
-    v = True    
-    try:
-        v = pconfig['Logging']['Verbose_Logging']
-    except KeyError:
-        v = True
-    if (v):
-        #t = text.decode('ascii','replace')
-        try:
-            s = '| ' + summary + ' | ' + text
-            s = s.decode('ascii','replace') 
-            print s
-            l = open("static/PoleyMote.log","a")
-            l.write(s + "\n")
-            l.close()
-        except UnicodeEncodeError:
-            s = '| ' + summary + ' | ' + repr(text)
-            s = s.decode('ascii','replace') 
-            print s
-            l = open("static/PoleyMote.log","a")
-            l.write(s + "\n")
-            l.close()
-        
-#----------------#
-# End of Logging #
-#----------------#
-
-#--------------------------------------------------------------------------------------------------------------------------------------------------#
-#--------------------------------------------------------------------------------------------------------------------------------------------------#
-
-
 #-------------------#
 # /url definitions #
 #-------------------#
@@ -204,18 +169,18 @@ urls = (    '/', 'pm_web',
 # Serves main page to client
 class pm_web:
     def GET(self):
-        log("Calling","'/' -> render.pm_web() -> template/pm_web.html")
+        log("GET","'/' -> render.pm_web() -> template/pm_web.html")
         return render.pm_web()
 
 class pm_web_new:
     def GET(self):
-        log("Calling","'/' -> render.pm_web_new() -> template/pm_web_new.html")
+        log("GET","'/' -> render.pm_web_new() -> template/pm_web_new.html")
         return render.pm_web_new()
 
 
 class controls:
     def GET(self):
-        log("Calling","'/controls' -> render.pm_controls() -> template/pm_controls.html")
+        log("GET","'/controls' -> render.pm_controls() -> template/pm_controls.html")
         return render.pm_controls()
     
 class cmd:
@@ -224,7 +189,7 @@ class cmd:
         web.header('Access-Control-Allow-Origin', '*')
         web.header('Access-Control-Allow-Credentials', 'true')
         web.header('Access-Control-Allow-Methods', 'GET')
-        log("Calling","'/cmd/" + cmd + "/" + opt + "-> handleCMD()")
+        log("GET","'/cmd/" + cmd + "/" + opt + "-> handleCMD")
         return handleCMD(cmd,opt)            
         
                 
@@ -233,7 +198,7 @@ class cmd:
         web.header('Access-Control-Allow-Origin', '*')
         web.header('Access-Control-Allow-Credentials', 'true')
         web.header('Access-Control-Allow-Methods', 'POST')
-        log("Calling","POST '/cmd/"+cmd+"' -> handleCMD()")
+        log("POST","'/cmd/"+cmd+"' -> handleCMD")
         # print web.input()
         # print type(web.input())
         return handleCMD(cmd, web.input())
@@ -336,10 +301,6 @@ def handleCMD(cmd,opt):
 def archive(opt):
     t = opt['trackURI']
     pl = json.loads(opt['plURIs'])
-    # print '--NAME--> ', opt['name']
-    # print '--TRACK URI--> ',opt['trackURI']
-    # for p in pl:
-    #     print p['name'], ' --> ', p['uri']
     conn = sql.connect(pm_db_path)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS archive(track TEXT,spURI TEXT, playlists TEXT, date TEXT);''')
@@ -366,16 +327,14 @@ def thumbsUp(opt):
         artist = s[0]
         album = s[1]
         name = s[2]
-        localTrackPath = getLocalPath(trackURI)
+        localTrack = [artist,album,name]
+        # print localTrack
         # if (h['Rate_5_star_in_iTunes'] == True):
-        # threading.Timer(1, itunesThumbsUp(localTrackPath)).start()
-        # print trackURI
-        # print localTrackPath
-        itunesThumbsUp(localTrackPath)
-        log("thumbsUp","Rated 5-stars in '"+localTrackPath+"' in iTunes")
+        itunesThumbsUp(localTrack)
+        log("thumbsUp","Rated 5-stars:'"+str(localTrack)+"' --> iTunes")
         # if (h['Rate_5_star_in_local_tag'] == True):
-        rateLocalFile(localTrackPath, 252)
-        log("thumbsUp","Rated 5-stars in '"+localTrackPath+"' in local file")
+        rateLocalFile(localTrack, 252)
+        log("thumbsUp","Rated 5-stars:'"+str(localTrack)+"' --> local file")
     conn = sql.connect(pm_db_path)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS thumbs_up(track TEXT, artist TEXT, album TEXT, trackURI TEXT, date TEXT);''')
@@ -393,10 +352,11 @@ def thumbsDown(opt):
         artist = s[0]
         album = s[1]
         name = s[2]
-        localTrackPath = getLocalPath(trackURI)
         # d = pconfig['Delete']
         # if (d['Move_to_purgatory_folder'] == True):
-        log("thumbsDown","Moving '"+localTrackPath+"' to '"+local_delete_folder+"'")
+        localTrack = [artist,album,name]
+        # print localTrack
+        log("thumbsDown","Moving '"+str(localTrack)+"' to '"+local_delete_folder+"'")
         # elif (d['Delete_local_file'] == True):
         #     os.remove(localTrackPath);
         #     log("thumbsDown","Deleted file '"+localTrackPath+"'")
@@ -404,10 +364,10 @@ def thumbsDown(opt):
         #     rateLocalFile(localTrackPath,1)
         #     log("thumbsDown","Rated 1 star '"+localTrackPath+"' in local file")
         # if (d['Delete_from_iTunes'] == True):
-        deleteLocalFile(localTrackPath)
-        deleteFromItunes(localTrackPath)
+        # deleteLocalFile(localTrackPath)
+        deleteFromItunes(localTrack)
 
-        log("thumbsDown","Deleting '"+localTrackPath+"' from iTunes")
+        log("thumbsDown","Deleting '"+str(localTrack)+"' from iTunes")
         # elif (d['Rate_1_star_in_iTunes'] == True):
         #     itunesThumbsDown(localTrackPath)
         #     log("thumbsDown","Rated 1 star '"+localTrackPath+"' in iTunes")
@@ -417,102 +377,6 @@ def thumbsDown(opt):
     c.execute('''INSERT INTO thumbs_down VALUES(?,?,?,?,date('now'));''', (name,artist,album,trackURI))
     conn.commit()
     conn.close()
-
-def deleteLocalFile(localTrackPath):
-    if not os.path.isdir(local_delete_folder):
-        os.makedirs(local_delete_folder)
-    shutil.move(localTrackPath,local_delete_folder)
-
-def rateLocalFile(trackURI,rat):
-    """
-        rateLocalFile is used the set the rating in the local file ID3 tag when rated by the user.
-        rate 1 for 1 star
-        #rate 252 for 5 star
-    """
-    p = getLocalPath(trackURI)
-    t = ID3(p)
-    if t.has_key('PCNT'):
-        if str(t['PCNT']).find('rating') != -1:
-            t['PCNT'].rating = rat
-    else:            
-        t.add(POPM(email = u'no@email', rating = rat, count = 1))
-    t.update_to_v23()
-    t.save(p, 2, 3)
-
-
-def increasePlayCount(trackURI):
-    """
-        increasePlayCount increments the playcount in the ID3 tag of a local file whenever it is played in Spotify
-    """
-    p = getLocalPath(trackURI)
-    #p = r"Z:/test/Reflections of the Television.mp3"
-    t = ID3(p)
-    if t.has_key('PCNT'):
-        if str(t['PCNT']).find('count') != -1:
-            t['PCNT'].count = 1 + t['PCNT'].count
-    else:
-        t.add(PCNT(count = 1))
-    t.update_to_v23()
-    t.save(p, 2, 3)
-
-
-
-root = 'http://ws.spotify.com/lookup/1/.json?'
-
-def getAlbumsFromArtist(spURI):
-    global root
-
-    r = requests.get(root + 'uri=' + spURI + '&extras=album')
-    while (r.text == ''):
-        time.sleep(0.1)
-    x = json.loads(r.text)
-    y = x['artist']['albums']
-    artistName = x['artist']['name']
-    albums = {}
-    for i in y:
-        if i['album']['artist'] == artistName:
-            try:
-                if i['album']['availability']['territories'].find('US') != -1:
-                    albums[i['album']['name']] = i['album']['href']
-            except KeyError:
-                pass
-    albumInfo = []    
-    for key, value in albums.iteritems():
-        albumInfo.append(getTracks(value))
-    return albumInfo
-
-
-def getTracks(spURI):
-    """
-        Look up album uri
-        create album object and append trackinfo array
-        get track information for each track and append to array
-        album: released, name, href
-        each track: track-number, name, available, href, length
-    """
-    global root
-
-    r = requests.get(root + 'uri=' + spURI + '&extras=trackdetail')
-    while (r.text == ''):
-        time.sleep(0.1)
-    x = json.loads(r.text)
-    y = x['album']
-    album = {}
-    album['released'] = y['released']
-    album['name'] = y['name']
-    album['href'] = y['href']
-    album['artist'] = y['artist']
-    tracks = []
-    for t in y['tracks']:
-        tracks.append([t['track-number'],t['name'],t['available'],t['href'],t['length']])
-    album['tracks'] = tracks
-    return album
-
-
-
-
-
-
 
 #--------------------------#
 # End of /url definitions #
@@ -530,7 +394,7 @@ def getStarted():
         Sends request for current track info and status
         Read settings from 'settings.ini' file into pconfig object
     """
-    log("Calling","getStarted() -> Sending 'refresh' message to PoleyMote Spotify app; reading settings")
+    log("getStarted","Sending 'refresh' message to PoleyMote Spotify app; reading settings")
     fireCommand('refresh')
     readConfig()
 
@@ -556,7 +420,7 @@ def trackUpdate(d):
 
     """
     global trackInfo, tid
-    log("Calling","trackUpdate(for '" + urllib.unquote(d.song) + "') -> Received 'Now Playing' information")
+    log("trackUpdate","for '" + urllib.unquote(d.song) + "' -> Received 'Now Playing' information")
     trackInfo['song'] = d.song
     trackInfo['artist'] = d.artist
     trackInfo['album'] = d.album
@@ -570,7 +434,7 @@ def trackUpdate(d):
         trackInfo['artistURI'] = d.artistURI
         trackInfo['albumURI'] = d.albumURI
     elif (d.local == 'true'):
-        localTrackPath = getLocalPath(d.spotifyURI)
+        localTrackPath = getPath([urllib.unquote(d.artist),urllib.unquote(d.album),urllib.unquote(d.song)])
         localTrack = getLocalArt(localTrackPath)
         trackInfo['artURL'] = localTrack['uri']
         trackInfo['year'] = localTrack['year']
@@ -588,7 +452,7 @@ def getArt(spTrackURL,x=False):
         -> return art path as string
     """
     if (not x):
-        log("Calling","getArt('" + spTrackURL + "') -> Getting cover art from Spotify")
+        log("getArt","for '" + spTrackURL + "' -> Getting cover art from Spotify")
     spEmbedUrl = 'https://embed.spotify.com/oembed/?url=' + spTrackURL + '&callback=?'
     try:
         r = requests.get(spEmbedUrl)
@@ -614,8 +478,10 @@ def getLocalArt(localTrackPath):
         -> returns dict {'uri':uri,'year':year}
     """
     global ip
-    log("Calling","getLocalArt() -> Retrieving cover art from local media file -> static/output.png")
+    log("getLocalArt","Retrieving cover art from local media file -> static/output.png")
     log("getLocalArt","Extracting art from '" + localTrackPath + "'")
+    # <-- filters the extraneous mutagen warnings from the console.
+    warnings.filterwarnings("ignore") 
     try:
         file = File(localTrackPath)
         try:
@@ -644,7 +510,7 @@ def getLocalPath(spURL):
         path to file:   Z:\\iTunes\\iTunes Media\\Music\\Various Artists\\BIRP! July 2010\\67 Marsh Blood.mp3'
     """
     global pm_db_path
-    log("Calling","getLocalPath() -> Using Spotify uri to find path of local file in index")
+    log("getLocalPath","Using Spotify uri to find path of local file in index")
     m = urllib.unquote(spURL.replace('spotify:local:','').replace(":","|||")).replace('+',' ').encode('ascii','replace').replace('??','?').split('|||')
     s = []
     for i in m:
@@ -666,13 +532,16 @@ def getLocalPath(spURL):
     c = conn.cursor()
     c.execute('SELECT path FROM music WHERE artist LIKE ? AND album LIKE ? AND title LIKE ? AND duration = ?;',(artist,album,title,duration))
     r = c.fetchone()
+    print 'r-->'
+    print eval(r[0])
+    r = r
     conn.close()
     # print ["called getLocalPath", s, spURL, r]
     try:
         log('getLocalPath',"Result: '" + r[0] + "'")
         return r[0]
     except Exception, e:
-        log('Error','Error in getLocalPath()')
+        log('Error','Error in getLocalPath')
         return ''
 
 
@@ -698,7 +567,7 @@ ws_url = 'ws://' + ip + ':9000'
 def fireCommand(msg):
     """ Send provided message to spapp using websockets """
 
-    log('Calling',"fireCommand() -> Sending message '" + msg + "' to PM Spotify app using WebSockets")
+    log('fireCommand',"Sending message '" + msg + "' to PM Spotify app using WebSockets")
     ws = create_connection(ws_url)
     ws.send(msg)
     ws.close()
@@ -753,6 +622,11 @@ def startBroadcastServer():
 if __name__ == "__main__":
     log('Hello', "Welcome to PoleyMote")
     log('IP','PoleyMote now running on http://'+ip)
+    # print('Encoding is now ', sys.stdout.encoding)
+    # sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+    # print('Encoding is now ', sys.stdout.encoding)
+    # print(os.environ["PYTHONIOENCODING"])
+
     app = web.application(urls, globals()).wsgifunc(web.httpserver.StaticMiddleware)
     try:
         threading.Timer(1, startBroadcastServer).start()
@@ -763,3 +637,60 @@ if __name__ == "__main__":
 #-------------#
 # end of main #
 #-------------#
+
+
+#----------------#
+# Still Building #
+#----------------#
+
+
+root = 'http://ws.spotify.com/lookup/1/.json?'
+
+def getAlbumsFromArtist(spURI):
+    global root
+
+    r = requests.get(root + 'uri=' + spURI + '&extras=album')
+    while (r.text == ''):
+        time.sleep(0.1)
+    x = json.loads(r.text)
+    y = x['artist']['albums']
+    artistName = x['artist']['name']
+    albums = {}
+    for i in y:
+        if i['album']['artist'] == artistName:
+            try:
+                if i['album']['availability']['territories'].find('US') != -1:
+                    albums[i['album']['name']] = i['album']['href']
+            except KeyError:
+                pass
+    albumInfo = []    
+    for key, value in albums.iteritems():
+        albumInfo.append(getTracks(value))
+    return albumInfo
+
+
+def getTracks(spURI):
+    """
+        Look up album uri
+        create album object and append trackinfo array
+        get track information for each track and append to array
+        album: released, name, href
+        each track: track-number, name, available, href, length
+    """
+    global root
+
+    r = requests.get(root + 'uri=' + spURI + '&extras=trackdetail')
+    while (r.text == ''):
+        time.sleep(0.1)
+    x = json.loads(r.text)
+    y = x['album']
+    album = {}
+    album['released'] = y['released']
+    album['name'] = y['name']
+    album['href'] = y['href']
+    album['artist'] = y['artist']
+    tracks = []
+    for t in y['tracks']:
+        tracks.append([t['track-number'],t['name'],t['available'],t['href'],t['length']])
+    album['tracks'] = tracks
+    return album
