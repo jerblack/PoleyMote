@@ -88,6 +88,13 @@ $(function () { // Starts when app loads
     });
 });
 
+function connectSonos() {
+    $.get('http://'+serverIP+'/cmd/connectsonos')
+}
+function disconnectSonos() {
+    $.get('http://'+serverIP+'/cmd/disconnectsonos')
+}
+
 function logNP(includePL, shuffle) {
     var t = player.track;
     if (includePL == true) {

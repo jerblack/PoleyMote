@@ -26,7 +26,6 @@ web.config.debug = True
 ip = socket.gethostbyname(socket.gethostname())
 port = 80
 sp_app_name = 'poleymote:'
-local_delete_folder = 'Z:/iTunes/Deleted/'
 local_archive_folder = 'Z:/iTunes/Archive/'
 pm_db_path = "poleymote.db"
 
@@ -357,6 +356,7 @@ def thumbsDown(opt):
         localTrack = [artist,album,name]
         # print localTrack
         log("thumbsDown","Moving '"+str(localTrack)+"' to '"+local_delete_folder+"'")
+        deleteLocalFile(localTrack)
         # elif (d['Delete_local_file'] == True):
         #     os.remove(localTrackPath);
         #     log("thumbsDown","Deleted file '"+localTrackPath+"'")

@@ -1,6 +1,6 @@
 # -*- coding: utf_8 -*-
 #!/usr/bin/env python
-import win32com, pythoncom, os, sys, plistlib, codecs
+import win32com, pythoncom, os, sys, plistlib, codecs, shutil
 import urllib as ul
 from win32com.client import Dispatch, pythoncom
 import struct, binascii, glob
@@ -8,8 +8,14 @@ from mutagen import File
 from mutagen.id3 import ID3, POPM, PCNT
 from pm_server_logging import log
 import HTMLParser as hp
+import sqlite3 as sql
+
+music_dir = "Z:\iTunes\iTunes Media\Music"
+db = 'poleymote.db'
 
 library_path = ''
+local_delete_folder = 'Z:/iTunes/Deleted/'
+
 # sys.stdout = codecs.getwriter('utf8')(sys.stdout)
 
 
@@ -24,6 +30,107 @@ def getiTunesLibraryXMLPath():
         win32com.client.pythoncom.CoUninitialize()
         return library_path
 
+def indexItunesLibrary():
+    global music_dir, db
+    f = getiTunesLibraryXMLPath()
+    x = plistlib.readPlist(f)
+    tracks = x['Tracks']
+    # return tracks
+    conn = sql.connect(db)
+    conn.text_factory = str
+    c = conn.cursor()
+    c.execute('''DROP TABLE IF EXISTS itunes;''')
+    c.execute('''CREATE TABLE itunes(id INTEGER PRIMARY KEY AUTOINCREMENT, location TEXT, artist TEXT, album TEXT, name TEXT, year TEXT, track_number TEXT, persistent_id TEXT);''')
+    # need to get t['Artist'],  t['Album'],  t['Name'], t['Persistent ID'], t['Location'] Year, Track Number
+    count = 0
+    for t in tracks.itervalues():
+        location = t['Location'] if  'Location' in t else ''
+        artist = t['Artist'] if 'Artist' in t else ''
+        album = t['Album'] if 'Album' in t else ''
+        name = t['Name'] if 'Name' in t else ''
+        year = t['Year'] if 'Year' in t else ''
+        track_number = t['Track Number'] if 'Track Number' in t else ''
+        persistent_id = t['Persistent ID'] if 'Persistent ID' in t else ''
+
+
+        # try:
+        count += 1
+        if (count%100 == 0):
+            print count
+        c.execute('''INSERT INTO itunes(location,artist,album,name,year,track_number,persistent_id) VALUES(?,?,?,?,?,?,?);''', (location, artist, album, name, year, track_number, persistent_id ))
+        # except KeyError:
+        #     print "Problem: ", t['Persistent ID'], t['Name']
+    conn.commit()
+    conn.close()
+
+
+def indexItunesLibraryNEW():
+    global music_dir, db
+    f = getiTunesLibraryXMLPath()
+    x = plistlib.readPlist(f)
+    tracks = x['Tracks']
+    # return tracks
+    conn = sql.connect(db)
+    conn.text_factory = str
+    c = conn.cursor()
+    c.execute('''DROP TABLE IF EXISTS itunes;''')
+    c.execute('''CREATE TABLE itunes(id INTEGER PRIMARY KEY AUTOINCREMENT, location TEXT, artist TEXT, album TEXT, name TEXT, year TEXT, track_number TEXT, persistent_id TEXT);''')
+    # need to get t['Artist'],  t['Album'],  t['Name'], t['Persistent ID'], t['Location'] Year, Track Number
+    count = 0
+    for t in tracks.itervalues():
+        location = t['Location'] if  'Location' in t else ''
+        artist = t['Artist'] if 'Artist' in t else ''
+        album = t['Album'] if 'Album' in t else ''
+        name = t['Name'] if 'Name' in t else ''
+        year = t['Year'] if 'Year' in t else ''
+        track_number = t['Track Number'] if 'Track Number' in t else ''
+        persistent_id = t['Persistent ID'] if 'Persistent ID' in t else ''
+
+
+        # try:
+        count += 1
+        if (count%100 == 0):
+            print count
+        c.execute('''INSERT INTO itunes(location,artist,album,name,year,track_number,persistent_id) VALUES(?,?,?,?,?,?,?);''', (location, artist, album, name, year, track_number, persistent_id ))
+        # except KeyError:
+        #     print "Problem: ", t['Persistent ID'], t['Name']
+    conn.commit()
+    conn.close()
+
+    def indexItunesLibrary2():
+    global music_dir, db
+    f = getiTunesLibraryXMLPath()
+    x = plistlib.readPlist(f)
+    tracks = x['Tracks']
+    # return tracks
+    conn = sql.connect(db)
+    conn.text_factory = str
+    c = conn.cursor()
+    c.execute('''DROP TABLE IF EXISTS itunes;''')
+    c.execute('''CREATE TABLE itunes(id INTEGER PRIMARY KEY AUTOINCREMENT, location TEXT, artist TEXT, album TEXT, name TEXT, year TEXT, track_number TEXT, persistent_id TEXT);''')
+    # need to get t['Artist'],  t['Album'],  t['Name'], t['Persistent ID'], t['Location'] Year, Track Number
+    count = 0
+    for t in tracks.itervalues():
+        location = t['Location'] if  'Location' in t else ''
+        artist = t['Artist'] if 'Artist' in t else ''
+        album = t['Album'] if 'Album' in t else ''
+        name = t['Name'] if 'Name' in t else ''
+        year = t['Year'] if 'Year' in t else ''
+        track_number = t['Track Number'] if 'Track Number' in t else ''
+        persistent_id = t['Persistent ID'] if 'Persistent ID' in t else ''
+
+
+        # try:
+        count += 1
+        if (count%100 == 0):
+            print count
+        c.execute('''INSERT INTO itunes(location,artist,album,name,year,track_number,persistent_id) VALUES(?,?,?,?,?,?,?);''', (location, artist, album, name, year, track_number, persistent_id ))
+        # except KeyError:
+        #     print "Problem: ", t['Persistent ID'], t['Name']
+    conn.commit()
+    conn.close()
+
+            
 def getPID(track):
     #p = 'Z:\\iTunes\\iTunes Media\\Music\\Various Artists\\BIRP! July 2010\\67 Marsh Blood.mp3'
     artist = (track[0].split('?'))[0]
