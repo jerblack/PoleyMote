@@ -45,9 +45,9 @@ def resetDefaultConfig():
                     "Favorite_Playlists":  # favorites each get a button under 'play a new playlist' in remote and dash
                         [{"Name":"Electronic/Dance", "uri":"spotify:user:jerblack:playlist:0m2cGNVm9Zp6l9e09SiffL"},
                          {"Name":"Ambient/Downtempo", "uri":"spotify:user:jerblack:playlist:7a9mjhowih1tHU94Yve7lx"},
-                         {"Name":"24 Hours - The Starck Mix","uri":"spotify:user:jerblack:playlist:1QDcvAyuxjckaGuRueUSVe"},
-                         {"Name":"iTunes Music", "uri":"spotify:user:jerblack:playlist:1CgDrOOVdpF34v9QaRvxkq"},
-                         {"Name":"Classical","uri":"spotify:user:jerblack:playlist:05owtqQBD8u3X56Hr7tiuw"}
+                         {"Name":"24 Hours - The Starck Mix","uri":"spotify:user:jerblack:playlist:2mULB2e4ksogUFS6yGOCOG"},
+                         {"Name":"iTunes Music", "uri":"spotify:user:jerblack:playlist:2q8vKcBUGHl0hR5TffHIlE"},
+                         {"Name":"Classical","uri":"spotify:user:jerblack:playlist:69NMPqX81LVyXX1py5QnOi"}
                          ]
                         ,
                     "Shuffle_Playlists":   
