@@ -17,7 +17,7 @@ from mutagen.id3 import ID3, POPM, PCNT
 # from pm_server_airfoil import disconnectSonos, setupAirfoil, connectSonos, ensureAirfoilRunning, isSonosConnected
 from pm_server_local import getiTunesLibraryXMLPath, deleteFromItunes, deleteLocalFile, rateLocalFile, increasePlayCount, itunesThumbsDown, itunesThumbsUp, getLocalTrackInfo
 from pm_server_logging import log
-from pm_server_config import pconfig, readConfig, resetDefaultConfig, local_archive_folder, db, sp_app_name, http_port
+from pm_server_config import pconfig, readConfig, resetDefaultConfig, local_delete_folder, local_archive_folder, db, sp_app_name, http_port
 from pm_server_net import getAddress
 web.config.debug = True
 

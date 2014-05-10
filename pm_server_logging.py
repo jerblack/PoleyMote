@@ -14,14 +14,14 @@ def log(summary,text):
     try:
         s = '| ' + summary + ' | ' + text
         s = s.decode('ascii','replace') 
-        # print s
+        print s
         l = open("static/PoleyMote.log","a")
         l.write(s + "\n")
         l.close()
     except UnicodeEncodeError:
         s = '| ' + summary + ' | ' + repr(text)
         s = s.decode('ascii','replace') 
-        # print s
+        print s
         l = open("static/PoleyMote.log","a")
         l.write(s + "\n")
         l.close()

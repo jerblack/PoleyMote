@@ -103,9 +103,9 @@ def getLocalTrackInfo(track):
     if type(s) == str or type(s)==unicode:
         s = parseSPurl(s)
     # log("getLocalTrackInfo","Finding local file in index")
-    artist = '%'+s[0]+'%'
-    album = '%'+s[1]+'%'
-    title = '%'+s[2]+'%'
+    artist = '%'+(s[0].split('?'))[0]+'%'
+    album = '%'+(s[1].split('?'))[0]+'%'
+    title = '%'+(s[2].split('?'))[0]+'%'
     duration = s[3]
     # log('getLocalTrackInfo',"Called for '" + spURL + "'")
     # log('getLocalTrackInfo',"Searching index using artist: '" + urllib.unquote(s[0]) + "', album: '" + urllib.unquote(s[1]) + "', title: '" + urllib.unquote(s[2]) + "', duration: '" + duration + "'")
@@ -126,7 +126,7 @@ def getLocalTrackInfo(track):
     # print 'type : ',type(r)
     # print track
     t = {}
-    t['location'] = r[1]
+    t['location'] = eval(r[1])
     t['artist'] = r[2]
     t['album'] = r[3]
     t['name'] = r[4]
@@ -146,6 +146,7 @@ def deleteLocalFile(track):
     localTrackPath = (getLocalTrackInfo(track))['location']
     if not os.path.isdir(local_delete_folder):
         os.makedirs(local_delete_folder)
+    print 'localTrackPath',localTrackPath
     shutil.move(localTrackPath,local_delete_folder)
 
 def cleanPath(path):
@@ -230,6 +231,7 @@ def itunesThumbsDown(track):
     sources = iTunes.Sources
     library = sources.ItemByName("Library")
     music = library.Playlists.ItemByName("Music")
+    allTracks = music.Tracks
     tr = allTracks.ItemByPersistentID(t['pid_low'],t['pid_high'])
     tr.Rating = 20
     win32com.client.pythoncom.CoUninitialize()
@@ -242,6 +244,7 @@ def itunesThumbsUp(track):
     sources = iTunes.Sources
     library = sources.ItemByName("Library")
     music = library.Playlists.ItemByName("Music")
+    allTracks = music.Tracks
     tr = allTracks.ItemByPersistentID(t['pid_low'],t['pid_high'])
     tr.Rating = 100
     win32com.client.pythoncom.CoUninitialize()
