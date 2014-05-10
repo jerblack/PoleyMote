@@ -4,6 +4,7 @@ Spotify App/kitchensink/
 pm_settings.ini
 *.db
 static/output.png
+/static/artwork/
 .gitignore
 
 #################

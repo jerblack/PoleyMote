@@ -1,8 +1,5 @@
 # -*- coding: utf_8 -*-
 #!/usr/bin/env python
-# mosaic uri local file paths
-# spotify:mosaic:localfileimage%3AZ%253A%255CiTunes%255CiTunes%2520Media%255CMusic%255CHundred%2520Hands%255CIndieFeed_%2520Alternative%2520_%2520Modern%2520Rock%2520Mus%255CDisaster.mp3
-
 
 from gevent import monkey
 monkey.patch_all()
@@ -18,21 +15,18 @@ from mutagen import File
 from mutagen.id3 import ID3, POPM, PCNT
 
 # from pm_server_airfoil import disconnectSonos, setupAirfoil, connectSonos, ensureAirfoilRunning, isSonosConnected
-from pm_server_local import getiTunesLibraryXMLPath, getPID, getPath, deleteFromItunes, deleteLocalFile, rateLocalFile, increasePlayCount, itunesThumbsDown, itunesThumbsUp
+from pm_server_local import getiTunesLibraryXMLPath, deleteFromItunes, deleteLocalFile, rateLocalFile, increasePlayCount, itunesThumbsDown, itunesThumbsUp, getLocalTrackInfo
 from pm_server_logging import log
+from pm_server_config import pconfig, readConfig, resetDefaultConfig, local_archive_folder, db, sp_app_name, http_port
+from pm_server_net import getAddress
 web.config.debug = True
 
-#ip = '192.168.0.50'
-ip = socket.gethostbyname(socket.gethostname())
-port = 80
-sp_app_name = 'poleymote:'
-local_archive_folder = 'Z:/iTunes/Archive/'
-pm_db_path = "poleymote.db"
+
+
 
 
 bmInfo = {}
 qInfo = {}
-tid = 0
 logo = "/static/apple-touch-icon.png"
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -41,114 +35,11 @@ logo = "/static/apple-touch-icon.png"
 #----------------------------------------#
 # Config file for Poleymote Settings #
 #----------------------------------------#
-pconfig = {}
+# pconfig = {}
 
-def readConfig():
-    global pconfig
-    log('readConfig',"Reading 'pm_settings.ini' into pconfig object")
-    #try:
-    #    f = open("pm_settings.ini")
-    #    pconfig = eval(f.read())
-    #    f.close()
-    #    return pconfig
-    #except IOError:
-    log('readConfig',"'pm_settings.ini' not found; calling resetDefaultConfig")
 
-    return resetDefaultConfig()
-    
 
-def resetDefaultConfig():
-    global pconfig
-    log('resetDefaultConfig',"Changing all settings to default values, creating new 'pm_settings.ini'")
 
-    defaults = { "Local": {
-                    "Use_iTunes": True,
-                    "Index_Local_Music": True,
-                    "Music_Locations": [""]
-                    },
-                "AirFoil": {
-                    "Use_Airfoil":True,
-                    "Display_warning_if_not_connected":False
-                    },
-                "Playlists": {
-                    "Favorite_Playlists":  # favorites each get a button under 'play a new playlist' in remote and dash
-                        [{"Name":"Electronic/Dance", "uri":"spotify:user:jerblack:playlist:0m2cGNVm9Zp6l9e09SiffL"},
-                         {"Name":"Ambient/Downtempo", "uri":"spotify:user:jerblack:playlist:7a9mjhowih1tHU94Yve7lx"},
-                         {"Name":"24 Hours - The Starck Mix","uri":"spotify:user:jerblack:playlist:1QDcvAyuxjckaGuRueUSVe"},
-                         {"Name":"iTunes Music", "uri":"spotify:user:jerblack:playlist:1CgDrOOVdpF34v9QaRvxkq"},
-                         {"Name":"Classical","uri":"spotify:user:jerblack:playlist:05owtqQBD8u3X56Hr7tiuw"}
-                         ]
-                        ,
-                    "Shuffle_Playlists":   
-                        [
-                         {"Name":"Electronic/Dance", "uri": "spotify:user:jerblack:playlist:0m2cGNVm9Zp6l9e09SiffL"},
-                         {"Name":"Spotify Library 1", "uri":"spotify:user:jerblack:playlist:5XnrfPufI8J3WuDXSJrj3m"},
-                         {"Name":"Spotify Library 2", "uri":"spotify:user:jerblack:playlist:3L5VxdSBxnUPVhwXCoThiG"},
-                         {"Name":"Spotify Library 3", "uri":"spotify:user:jerblack:playlist:3HESEQC2UvmA1Ap1q4Q2m1"},
-						 {"Name":"iTunes Music", "uri":"spotify:user:jerblack:playlist:1CgDrOOVdpF34v9QaRvxkq"}
-                         ],
-                                                  
-                    "Shuffle_Playlist_Size": 50, #drop-down should have increments of 50
-                    "Automatically_add_music_to_queue_when_nearing_end": True
-                    },
-                "Bookmarks": {
-                    "Support_Multiple_Users": True, #Users are created in Settings in the dashboard
-                    "Users" : [{"Name":"Jeremy", "uri":"spotify:user:jerblack:playlist:4aSwU3mYsVoMV5Wnxo4AbB"},
-                                {"Name":"Maria", "uri":"spotify:user:jerblack:playlist:6b82pMJqlIBygf3cHgZZ5p"}],
-                    "Support_Bookmarks": True,
-                    "Use_Custom_Playlist": False,
-                    "Automatically_star_track_if_bookmarked": True
-                    },
-                "Delete": {
-                    "Delete_from_current_playlist" : True,
-                    "Delete_from_all_shuffle_playlists" : True,
-                    "Delete_from_all_favorite_playlists" : True,
-                    "Save_in_purgatory_playlist" : False,
-                    "Custom_purgatory_playlist": "",
-                    "Delete_local_file" : True,
-                    "Delete_from_iTunes" : True,
-                    "Rate_1_star_in_iTunes" : True,
-                    "Rate_1_star_in_local_tag" : True,
-                    "Move_to_purgatory_folder" : True,
-                    "Custom_purgatory_folder": "",
-                    "Update_metadata_in_song_file": True, # THIS IS REDUNDANT to Rate_1_star_in_local_tag
-                    "Show_option_for_deleting_all_by_artist": True,
-                    "Show_option_for_deleting_all_by_album": True,
-                    "Delete_Later_Playlist": "spotify:user:jerblack:playlist:67EixlPyzPOax02RdqquBs"
-                    },
-                "Archive": {
-                    "Archive_from_current_playlist" : True, 
-                    "Archive_from_all_shuffle_playlists" : True,
-                    "Archive_from_all_favorite_playlists" : True,
-                    "Archive_duration" : "PLACEHOLDER",
-                    "Restore_to_original_playlists" : True,
-                    "Restore_to_custom_playlist" : False,
-                    "Custom_restore_playlist" : "PLACEHOLDER URI"
-                     
-                    },
-                "Heart": {
-                    "Star_in_Spotify": True,
-                    "Add_to_bookmarks": True,
-                    "Rate_5_star_in_iTunes": True,
-                    "Rate_5_star_in_local_tag": True
-                    },
-                "Logging": {
-                    "Log_to_file": True,
-                    "Custom_log_filename": "",
-                    "Custom_log_path": "",
-                    "Verbose_Logging": True
-                }
-
-        }
-    f = open("pm_settings.ini", "w")
-    f.write(str(defaults))
-    f.close()
-    pconfig = defaults
-    return pconfig
-
-#-------------------------------------------#
-# End of Config file for Poleymote Settings #
-#-------------------------------------------#
 
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -300,7 +191,7 @@ def handleCMD(cmd,opt):
 def archive(opt):
     t = opt['trackURI']
     pl = json.loads(opt['plURIs'])
-    conn = sql.connect(pm_db_path)
+    conn = sql.connect(db)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS archive(track TEXT,spURI TEXT, playlists TEXT, date TEXT);''')
     c.execute('''INSERT INTO ARCHIVE VALUES(?,?,?,date('now'));''', (opt['name'],opt['trackURI'],opt['plURIs']))
@@ -326,7 +217,8 @@ def thumbsUp(opt):
         artist = s[0]
         album = s[1]
         name = s[2]
-        localTrack = [artist,album,name]
+        duration = s[3]
+        localTrack = [artist,album,name,duration]
         # print localTrack
         # if (h['Rate_5_star_in_iTunes'] == True):
         itunesThumbsUp(localTrack)
@@ -334,7 +226,7 @@ def thumbsUp(opt):
         # if (h['Rate_5_star_in_local_tag'] == True):
         rateLocalFile(localTrack, 252)
         log("thumbsUp","Rated 5-stars:'"+str(localTrack)+"' --> local file")
-    conn = sql.connect(pm_db_path)
+    conn = sql.connect(db)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS thumbs_up(track TEXT, artist TEXT, album TEXT, trackURI TEXT, date TEXT);''')
     c.execute('''INSERT INTO thumbs_up VALUES(?,?,?,?,date('now'));''', (name,artist,album,trackURI))
@@ -351,9 +243,10 @@ def thumbsDown(opt):
         artist = s[0]
         album = s[1]
         name = s[2]
+        duration = s[3]
         # d = pconfig['Delete']
         # if (d['Move_to_purgatory_folder'] == True):
-        localTrack = [artist,album,name]
+        localTrack = [artist,album,name,duration]
         # print localTrack
         log("thumbsDown","Moving '"+str(localTrack)+"' to '"+local_delete_folder+"'")
         deleteLocalFile(localTrack)
@@ -371,7 +264,7 @@ def thumbsDown(opt):
         # elif (d['Rate_1_star_in_iTunes'] == True):
         #     itunesThumbsDown(localTrackPath)
         #     log("thumbsDown","Rated 1 star '"+localTrackPath+"' in iTunes")
-    conn = sql.connect(pm_db_path)
+    conn = sql.connect(db)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS thumbs_down(track TEXT, artist TEXT, album TEXT, trackURI TEXT, date TEXT);''')
     c.execute('''INSERT INTO thumbs_down VALUES(?,?,?,?,date('now'));''', (name,artist,album,trackURI))
@@ -398,7 +291,8 @@ def getStarted():
     fireCommand('refresh')
     readConfig()
 
-trackInfo = {'song':'','artist':'','album':'','starred':'','playing':'','id':0,'year':'','artURL':'', 'sonos_connected':1}
+trackInfo = {'id':0}
+tid = 0
 
 def trackUpdate(d):
     """
@@ -434,15 +328,15 @@ def trackUpdate(d):
         trackInfo['artistURI'] = d.artistURI
         trackInfo['albumURI'] = d.albumURI
     elif (d.local == 'true'):
-        localTrackPath = getPath([urllib.unquote(d.artist),urllib.unquote(d.album),urllib.unquote(d.song)])
-        localTrack = getLocalArt(localTrackPath)
-        trackInfo['artURL'] = localTrack['uri']
-        trackInfo['year'] = localTrack['year']
+        lt = getLocalTrackInfo(d.spotifyURI)
+        trackInfo['artURL'] = lt['img']
+        trackInfo['year'] = lt['year']
         trackInfo['artistURI'] = "local"
         trackInfo['albumURI'] = "local"
     trackInfo['id'] += 1
     tid = trackInfo['id']
     log('Now Playing', '\'' + urllib.unquote(d.song) + '\' by \'' + urllib.unquote(d.artist) + '\' on \'' + urllib.unquote(d.album) + '\'')
+
 
 def getArt(spTrackURL,x=False):
     """
@@ -471,83 +365,6 @@ def getArt(spTrackURL,x=False):
     return t
 
 
-def getLocalArt(localTrackPath):
-    """
-        Takes a file path
-        -> uses that to extract album art
-        -> returns dict {'uri':uri,'year':year}
-    """
-    global ip
-    log("getLocalArt","Retrieving cover art from local media file -> static/output.png")
-    log("getLocalArt","Extracting art from '" + localTrackPath + "'")
-    # <-- filters the extraneous mutagen warnings from the console.
-    warnings.filterwarnings("ignore") 
-    try:
-        file = File(localTrackPath)
-        try:
-            year = str(file.tags['TDRC'].text[0])
-        except KeyError:
-            year = ""
-        try:
-            artwork = file.tags['APIC:'].data
-            with open('static\output.png', 'wb') as img:
-                img.write(artwork)
-            return { 'uri':'http://' + ip + '/static/output.png?' + str(time.time()), 'year': year }
-        except KeyError:
-            return { 'uri':'http://' + ip + logo, 'year': year }
-    except IOError:
-        return { 'uri':'http://' + ip + logo, 'year': "" }
-
-
-def getLocalPath(spURL):
-    """
-        Take a spotify uri for a local file 
-        -> extract the artist, album, title, and duration 
-        -> use those to search the local music index
-        -> return the path to the file
-
-        spotify URI:    spotify:local:The+Whiskers:BIRP%21+July+2010:Marsh+Blood:220
-        path to file:   Z:\\iTunes\\iTunes Media\\Music\\Various Artists\\BIRP! July 2010\\67 Marsh Blood.mp3'
-    """
-    global pm_db_path
-    log("getLocalPath","Using Spotify uri to find path of local file in index")
-    m = urllib.unquote(spURL.replace('spotify:local:','').replace(":","|||")).replace('+',' ').encode('ascii','replace').replace('??','?').split('|||')
-    s = []
-    for i in m:
-        s.append((i.split('?'))[0])
-    artist = '%'+s[0]+'%'
-    album = '%'+s[1]+'%'
-    title = '%'+s[2]+'%'
-    
-    sec = int(s[3]) % 60
-    if sec < 10:
-        sec = '0' + str(sec)
-    else:
-        sec = str(sec)
-    duration = str(int(s[3]) / 60) + ":" + sec
-    log('getLocalPath',"Called for '" + spURL + "'")
-    log('getLocalPath',"Searching index using artist: '" + urllib.unquote(s[0]) + "', album: '" + urllib.unquote(s[1]) + "', title: '" + urllib.unquote(s[2]) + "', duration: '" + duration + "'")
-
-    conn = sql.connect(pm_db_path)
-    c = conn.cursor()
-    c.execute('SELECT path FROM music WHERE artist LIKE ? AND album LIKE ? AND title LIKE ? AND duration = ?;',(artist,album,title,duration))
-    r = c.fetchone()
-    print 'r-->'
-    print eval(r[0])
-    r = r
-    conn.close()
-    # print ["called getLocalPath", s, spURL, r]
-    try:
-        log('getLocalPath',"Result: '" + r[0] + "'")
-        return r[0]
-    except Exception, e:
-        log('Error','Error in getLocalPath')
-        return ''
-
-
-
-
-
 #----------------------------------------#
 # End of Track and Art Metadata Handling #
 #----------------------------------------#
@@ -562,7 +379,7 @@ def getLocalPath(spURL):
 #----------------------------------------#
 
 # spapp websocket interface
-ws_url = 'ws://' + ip + ':9000'
+ws_url = 'ws://' + getAddress(1) + ':9000'
 
 def fireCommand(msg):
     """ Send provided message to spapp using websockets """
@@ -621,7 +438,7 @@ def startBroadcastServer():
 #------#
 if __name__ == "__main__":
     log('Hello', "Welcome to PoleyMote")
-    log('IP','PoleyMote now running on http://'+ip)
+    log('IP','PoleyMote now running on http://'+getAddress())
     # print('Encoding is now ', sys.stdout.encoding)
     # sys.stdout = codecs.getwriter('utf8')(sys.stdout)
     # print('Encoding is now ', sys.stdout.encoding)
@@ -631,7 +448,7 @@ if __name__ == "__main__":
     try:
         threading.Timer(1, startBroadcastServer).start()
         threading.Timer(3, getStarted).start()
-        WSGIServer(('',port),app).serve_forever()
+        WSGIServer(('',http_port),app).serve_forever()
     except KeyboardInterrupt:
         sys.exit()
 #-------------#
