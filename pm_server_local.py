@@ -97,6 +97,7 @@ def parseSPurl(spURL):
     return [artist,album,title,duration]
 
 
+
 def getLocalTrackInfo(track):
     global db
     s = track

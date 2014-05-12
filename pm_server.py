@@ -115,6 +115,10 @@ def handleCMD(cmd,opt):
         trackUpdate(opt)
         return 0
 
+    elif (cmd == "getthumbsdown"):
+        log("handleCMD","'/cmd/getThumbsDown' -> Sending list of 'thumbs down' tracks")
+        return json.dumps(getThumbsDown())
+        
     elif (cmd == "requestbookmarks"):
         log("handleCMD","'/cmd/getbookmark/" + opt + "' -> Send WebSocket 'getbookmarks+" + opt + "' to PoleyMote Spotify app. -> Return result")
         bmInfo[opt] = ''
@@ -252,6 +256,18 @@ def thumbsDown(opt):
     c.execute('''INSERT INTO thumbs_down VALUES(?,?,?,?,date('now'));''', (name,artist,album,trackURI))
     conn.commit()
     conn.close()
+
+
+def getThumbsDown():
+    global db
+    conn = sql.connect(db)
+    c = conn.cursor()
+    c.execute('select trackURI from thumbs_down;',())
+    r = c.fetchall()
+    t = []
+    for i in r:
+        t.append(i[0])
+    return t
 
 #--------------------------#
 # End of /url definitions #
