@@ -147,17 +147,35 @@ def getLocalTrackInfo(track):
         return t
     
 
+
+
+
 def deleteLocalFile(track):
     log('deleteLocalFile','Called on '+str(track))
-    localTrackPath = (getLocalTrackInfo(track))['location']
-    if not os.path.isdir(local_delete_folder):
-        os.makedirs(local_delete_folder)
-    print 'localTrackPath',localTrackPath
-    new_path = os.path.join(local_delete_folder + os.path.basename(localTrackPath))
-    print 'new_path', new_path
-    if os.path.exists(new_path):
-        os.rename(new_path, local_delete_folder+'_' + os.path.basename(new_path))
-    os.rename(localTrackPath,new_path)
+    
+    lp = (getLocalTrackInfo(track))['location']
+    # Z://iTunes//iTunes Media//Music//Following//KCRW's Today's Top Tune//Following.mp3
+    
+    dst_path = local_delete_folder
+    # Z:/iTunes/Deleted/
+    split = os.path.split(lp)
+    src_path = split[0]
+    fname = split[1]
+
+    if not os.path.isdir(dst_path):
+        os.makedirs(dst_path)
+
+    try:
+        os.rename(os.path.join(src_path, fname), os.path.join(dst_path, fname))
+    except WindowsError:
+        pass
+
+
+
+
+
+
+
 
 def cleanPath(path):
     h = hp.HTMLParser()
@@ -215,7 +233,6 @@ def increasePlayCount(track):
 
 def deleteFromItunes(track):
     log('deleteFromItunes','Called for '+str(track))
-
     try:
         win32com.client.pythoncom.CoInitialize()
         iTunes = win32com.client.Dispatch("iTunes.Application")
@@ -227,8 +244,7 @@ def deleteFromItunes(track):
         tr = allTracks.ItemByPersistentID(t['pid_low'],t['pid_high'])
         tr.delete()
     except AttributeError:
-        print '| Error | Failed to delete local file from iTunes database'
-        print 'track = ', track
+        pass
     win32com.client.pythoncom.CoUninitialize()
 
 

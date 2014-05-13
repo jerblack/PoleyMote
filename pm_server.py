@@ -176,18 +176,30 @@ def handleCMD(cmd,opt):
 # spotify:local:Butterfly+Bones:BIRP%21+March+2010:%3c3:228
 def archive(opt):
     t = opt['trackURI']
-    pl = json.loads(opt['plURIs'])
-    conn = sql.connect(db)
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS archive(track TEXT,spURI TEXT, playlists TEXT, date TEXT);''')
-    c.execute('''INSERT INTO ARCHIVE VALUES(?,?,?,date('now'));''', (opt['name'],opt['trackURI'],opt['plURIs']))
-    conn.commit()
-    conn.close()
-    if (t.find('spotify:local:'!=-1)):
+    abs_path = ''
+    if (t.find('spotify:local:')!=-1):
+        info        = getLocalTrackInfo(t)
+        dst_path    = local_archive_folder
+        split       = os.path.split(info['location'])
+        src_path    = split[0]
+        fname       = split[1]
+        abs_path    = os.path.join(dst_path, fname)
         if not os.path.isdir(local_archive_folder):
             os.makedirs(local_archive_folder)
-        shutil.move(localTrackPath,local_archive_folder)
-        log("thumbsDown","Moving '"+localTrackPath+"' to '"+local_archive_folder+"'")
+        log("thumbsDown","Moving '"+fname+"' to '"+dst_path+"'")
+
+        try:
+            os.rename(os.path.join(src_path, fname), abs_path)
+        except WindowsError:
+            pass
+
+    conn = sql.connect(db)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS archive(track TEXT,spURI TEXT, playlists TEXT, date TEXT, path TEXT);''')
+    c.execute('''INSERT INTO ARCHIVE VALUES(?,?,?,date('now'),?);''', (opt['name'],opt['trackURI'],opt['plURIs'],abs_path))
+    conn.commit()
+    conn.close()
+
     # select * from archive where date < date('now','+1 day')
 
 # spotify:local:Butterfly+Bones:BIRP%21+March+2010:%3c3:228
@@ -200,11 +212,11 @@ def thumbsUp(opt):
         name, artist, album = opt['name'], opt['artist'], opt['album']
     else:
         s = urllib.unquote(opt['spURL'].replace('spotify:local:','').replace(":","|||")).replace('+',' ').encode('ascii','replace').replace('??','?').split('|||')
-        artist = s[0]
-        album = s[1]
-        name = s[2]
-        duration = s[3]
-        localTrack = [artist,album,name,duration]
+        artist      = s[0]
+        album       = s[1]
+        name        = s[2]
+        duration    = s[3]
+        localTrack  = [artist,album,name,duration]
         # print localTrack
         # if (h['Rate_5_star_in_iTunes'] == True):
         itunesThumbsUp(localTrack)
@@ -226,10 +238,10 @@ def thumbsDown(opt):
         name, artist, album = opt['name'], opt['artist'], opt['album']
     else:
         s = urllib.unquote(opt['spURL'].replace('spotify:local:','').replace(":","|||")).replace('+',' ').encode('ascii','replace').replace('??','?').split('|||')
-        artist = s[0]
-        album = s[1]
-        name = s[2]
-        duration = s[3]
+        artist      = s[0]
+        album       = s[1]
+        name        = s[2]
+        duration    = s[3]
         # d = pconfig['Delete']
         # if (d['Move_to_purgatory_folder'] == True):
         localTrack = [artist,album,name,duration]
@@ -313,30 +325,30 @@ def trackUpdate(d):
     """
     global trackInfo, tid
     log("trackUpdate","for '" + urllib.unquote(d.song) + "' -> Received 'Now Playing' information")
-    trackInfo['song'] = d.song
-    trackInfo['artist'] = d.artist
-    trackInfo['album'] = d.album
-    trackInfo['starred'] = d.starred
-    trackInfo['playing'] = d.playing
-    trackInfo['playlist'] = d.playlist
+    trackInfo['song']       = d.song
+    trackInfo['artist']     = d.artist
+    trackInfo['album']      = d.album
+    trackInfo['starred']    = d.starred
+    trackInfo['playing']    = d.playing
+    trackInfo['playlist']   = d.playlist
     # trackInfo['sonos_connected'] = isSonosConnected()
     if (d.local == 'false'):
-        trackInfo['year'] = d.year
-        trackInfo['artURL'] = getArt(d.spotifyURI)
-        trackInfo['artistURI'] = d.artistURI
-        trackInfo['albumURI'] = d.albumURI
+        trackInfo['year']       = d.year
+        trackInfo['artURL']     = getArt(d.spotifyURI)
+        trackInfo['artistURI']  = d.artistURI
+        trackInfo['albumURI']   = d.albumURI
     elif (d.local == 'true'):
         lt = getLocalTrackInfo(d.spotifyURI)
         if lt != None:
-            trackInfo['artURL'] = lt['img']
-            trackInfo['year'] = lt['year']
-            trackInfo['artistURI'] = "local"
-            trackInfo['albumURI'] = "local"
+            trackInfo['artURL']     = lt['img']
+            trackInfo['year']       = lt['year']
+            trackInfo['artistURI']  = "local"
+            trackInfo['albumURI']   = "local"
         else:
-            trackInfo['artURL'] = '/static/artwork/no_art.png'
-            trackInfo['year'] = '2048'
-            trackInfo['artistURI'] = "local"
-            trackInfo['albumURI'] = "local"
+            trackInfo['artURL']     = '/static/artwork/no_art.png'
+            trackInfo['year']       = '2048'
+            trackInfo['artistURI']  = "local"
+            trackInfo['albumURI']   = "local"
     trackInfo['id'] += 1
     tid = trackInfo['id']
     log('Now Playing', '\'' + urllib.unquote(d.song) + '\' by \'' + urllib.unquote(d.artist) + '\' on \'' + urllib.unquote(d.album) + '\'')
@@ -373,16 +385,8 @@ def getArt(spTrackURL,x=False):
 # End of Track and Art Metadata Handling #
 #----------------------------------------#
 
-
 #--------------------------------------------------------------------------------------------------------------------------------------------------#
 #--------------------------------------------------------------------------------------------------------------------------------------------------#
-
-
-
-
-#--------------------------------------------------------------------------------------------------------------------------------------------------#
-#--------------------------------------------------------------------------------------------------------------------------------------------------#
-
 
 #------#
 # main #
@@ -390,11 +394,6 @@ def getArt(spTrackURL,x=False):
 if __name__ == "__main__":
     log('Hello', "Welcome to PoleyMote")
     log('IP','PoleyMote now running on http://'+getAddress())
-    # print('Encoding is now ', sys.stdout.encoding)
-    # sys.stdout = codecs.getwriter('utf8')(sys.stdout)
-    # print('Encoding is now ', sys.stdout.encoding)
-    # print(os.environ["PYTHONIOENCODING"])
-
     app = web.application(urls, globals()).wsgifunc(web.httpserver.StaticMiddleware)
     try:
         threading.Timer(1, startBroadcastServer).start()
@@ -450,14 +449,14 @@ def getTracks(spURI):
     r = requests.get(root + 'uri=' + spURI + '&extras=trackdetail')
     while (r.text == ''):
         time.sleep(0.1)
-    x = json.loads(r.text)
-    y = x['album']
-    album = {}
-    album['released'] = y['released']
-    album['name'] = y['name']
-    album['href'] = y['href']
-    album['artist'] = y['artist']
-    tracks = []
+    x                   = json.loads(r.text)
+    y                   = x['album']
+    album               = {}
+    album['released']   = y['released']
+    album['name']       = y['name']
+    album['href']       = y['href']
+    album['artist']     = y['artist']
+    tracks              = []
     for t in y['tracks']:
         tracks.append([t['track-number'],t['name'],t['available'],t['href'],t['length']])
     album['tracks'] = tracks

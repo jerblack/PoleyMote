@@ -91,6 +91,8 @@ controls.appendToQueue = function () {
 
 controls.archiveTrack = function () {
     var tName = player.track.toString().decodeForText();
+    var tArtist = player.track.artists[0].name.decodeForText();
+    var tAlbum = player.track.album.name.decodeForText();
     var tUri = player.track.uri;
     var track = player.track;
     var a = config.Archive;
@@ -127,10 +129,11 @@ controls.archiveTrack = function () {
     })
     var archiveData = {
         "name": tName,
+        "artist": tArtist,
+        "album": tAlbum,
         "trackURI": tUri,
         "plURIs": JSON.stringify(plResultsArray)
     };
-    console.log(archiveData);
     $.post("http://" + serverIP + "/cmd/archive", archiveData);
     controls.next();
 

@@ -224,6 +224,7 @@ dashboard.toolButtons = function () {
     $("#backBtn").click(controls.skipback);
     $("#playBtn").click(controls.play.toggle);
     $("#nextBtn").click(controls.next);
+    $("#archivetrack").click(controls.archiveTrack);
     $("#playshuffle").click(controls.play.shuffle);
     $("#playstarred").click(controls.play.starred);
     $("#thumbsDownBtn").click(remove.track.current);
