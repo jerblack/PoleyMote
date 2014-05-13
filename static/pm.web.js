@@ -183,10 +183,10 @@ function fillToolsMenu() {
 ['sendWebRequest("/cmd/spotify/archivetrack");'                      , ' Archive Track'               , 1],
 ['sendWebRequest("/cmd/connectsonos");'                 , ' Connect Sonos'               , 1],
 ['sendWebRequest("/cmd/disconnectsonos");'              , ' Disconnect Sonos'            , 1],
-['sendWebRequest("/cmd/spotify/deletelater");'          , ' Delete Later'                , 1],
-['sendWebRequest("/cmd/spotify/canceldeletelater");'    , ' Cancel Delete Later'         , 1],
-['sendWebRequest("/cmd/spotify/deleteartist");'         , ' Delete this Artist'          , 1],
-['sendWebRequest("/cmd/spotify/deletealbum");'          , ' Delete this Album'           , 1],
+['sendWebRequest("/cmd/spotify/removelater");'          , ' Remove Later'                , 1],
+['sendWebRequest("/cmd/spotify/cancelremovelater");'    , ' Cancel Remove Later'         , 1],
+['sendWebRequest("/cmd/spotify/removeartist");'         , ' Remove this Artist'          , 1],
+['sendWebRequest("/cmd/spotify/removealbum");'          , ' Remove this Album'           , 1],
 ['signOut();'                                           , ' Sign Out'                    , 1],
 ['pinWPhome();'                                 , ' Pin to Windows Phone Home'   , 1]];
 

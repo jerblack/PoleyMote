@@ -126,21 +126,26 @@ def getLocalTrackInfo(track):
     # print 's is : ', str(s)
     # print 'type : ',type(r)
     # print track
-    t = {}
-    t['location'] = eval(r[1])
-    t['artist'] = r[2]
-    t['album'] = r[3]
-    t['name'] = r[4]
-    t['year'] = r[5]
-    t['track'] = r[6]
-    t['duration'] = r[7]
-    t['persistent_id'] = r[8]
-    t['pid_low'] = r[9]
-    t['pid_high'] = r[10]
-    t['img'] = 'http://' + getAddress() + '/' + r[11]
+    if r != None:
+        t = {}
+        t['location']       = eval(r[1])
+        t['artist']         = r[2]
+        t['album']          = r[3]
+        t['name']           = r[4]
+        t['year']           = r[5]
+        t['track']          = r[6]
+        t['duration']       = r[7]
+        t['persistent_id']  = r[8]
+        t['pid_low']        = r[9]
+        t['pid_high']       = r[10]
+        t['img']            = 'http://' + getAddress() + '/' + r[11]
+        conn.close()
+        return t
+    else:
+        t = None;
+        conn.close()
+        return t
     
-    conn.close()
-    return t
 
 def deleteLocalFile(track):
     log('deleteLocalFile','Called on '+str(track))
@@ -148,7 +153,11 @@ def deleteLocalFile(track):
     if not os.path.isdir(local_delete_folder):
         os.makedirs(local_delete_folder)
     print 'localTrackPath',localTrackPath
-    shutil.move(localTrackPath,local_delete_folder)
+    new_path = os.path.join(local_delete_folder + os.path.basename(localTrackPath))
+    print 'new_path', new_path
+    if os.path.exists(new_path):
+        os.rename(new_path, local_delete_folder+'_' + os.path.basename(new_path))
+    os.rename(localTrackPath,new_path)
 
 def cleanPath(path):
     h = hp.HTMLParser()

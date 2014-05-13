@@ -327,10 +327,16 @@ def trackUpdate(d):
         trackInfo['albumURI'] = d.albumURI
     elif (d.local == 'true'):
         lt = getLocalTrackInfo(d.spotifyURI)
-        trackInfo['artURL'] = lt['img']
-        trackInfo['year'] = lt['year']
-        trackInfo['artistURI'] = "local"
-        trackInfo['albumURI'] = "local"
+        if lt != None:
+            trackInfo['artURL'] = lt['img']
+            trackInfo['year'] = lt['year']
+            trackInfo['artistURI'] = "local"
+            trackInfo['albumURI'] = "local"
+        else:
+            trackInfo['artURL'] = '/static/artwork/no_art.png'
+            trackInfo['year'] = '2048'
+            trackInfo['artistURI'] = "local"
+            trackInfo['albumURI'] = "local"
     trackInfo['id'] += 1
     tid = trackInfo['id']
     log('Now Playing', '\'' + urllib.unquote(d.song) + '\' by \'' + urllib.unquote(d.artist) + '\' on \'' + urllib.unquote(d.album) + '\'')

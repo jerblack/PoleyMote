@@ -1,51 +1,53 @@
+controls ={
+    play: {}
+}
 
-function togglePause() {
-    // Check if playing and reverse it
+controls.play.toggle = function () {
     if (player.playing) {
         log('Music Paused');
     } else {
         log('Music Resumed');
     }
     player.playing = !(player.playing);
-    nowPlayingInfo();
+    nowplaying.sendUpdate();
 }
 
-function nextTrack() {
+controls.next = function () {
     log('Track Skipped');
     player.next();
 }
 
-function restartTrack() {
+controls.skipback = function () {
     log('Track Restarted');
     player.playTrack(player.track);
 }
 
-function playStarred() {
+controls.play.starred = function () {
     var p = models.library.starredPlaylist;
     var i = Math.floor(Math.random() * (p.length + 1))
     log('Now Playing', ['Track #' + i + ' in \'Starred\' Playlist']);
     player.play(p.tracks[i].uri, p.uri);
 }
 
-function playTrack(spURL) {
+controls.play.track = function(spURL) {
     player.playTrack(spURL);
 }
 
-function playAlbum(spURL) {
+controls.play.album = function(spURL) {
     var album = models.Album.fromURI(spURL, function (album) {
         log('Now Playing Album', ['\'' + album.name + '\'', 'by \'' + album.artist.name + '\'']);
     });
     player.play(spURL);
 }
 
-function playPlaylist(spURL) {
+controls.play.playlist = function(spURL) {
     var pl = models.Playlist.fromURI(spURL);
     player.play(pl.tracks[Math.floor(Math.random() * pl.length)], pl);
     log('Now Playing', ['\'' + pl.name + '\' Playlist']);
 }
 
 
-function playShufflePlaylists() {
+controls.play.shuffle = function() {
     var spls = config.Playlists.Shuffle_Playlists;
     log('Now Playing', ["Now playing in shuffle mode.", "Playing random tracks from shuffle playlists."]);
     
@@ -65,10 +67,10 @@ function playShufflePlaylists() {
             queue.add(pl.tracks[Math.floor(Math.random() * pl.length)]);
             queuePLs.push(pl.uri);
         }
-    }, 5000);
+    }, 3000);
 }
 
-function appendToQueue() {
+controls.appendToQueue = function () {
     if (config.Playlists.Automatically_add_music_to_queue_when_nearing_end) {
         if (player.context === queue.uri) {
             if (queue.length - (queue.indexOf(player.track)) < 5 && queue.length - (queue.indexOf(player.track)) > 2) {
@@ -87,91 +89,7 @@ function appendToQueue() {
     }
 }
 
-
-function deleteTrack(trackURI) {
-    var d = config.Delete;
-    var plArray = []
-
-    if (d.Delete_from_all_shuffle_playlists) {
-        config.Playlists.Shuffle_Playlists.forEach(function (p) { 
-            plArray.push(p.uri)
-        });}
-
-    if (d.Delete_from_all_favorite_playlists == true) {
-        config.Playlists.Favorite_Playlists.forEach(function (p) {
-            plArray.push(p.uri);
-        });}
-
-    if (d.Delete_from_current_playlist == true) {
-        if (player.context != null) {
-            if (player.context.search("spotify:internal:temp_playlist") != 0) {
-                plArray.push(player.context);
-            }}}
-
-    var t = models.Track.fromURI(trackURI, function (t) {
-        t.starred = false;
-        plArray.forEach(function (plURL) {
-            var pl = models.Playlist.fromURI(plURL, function (pl) {
-                // if (pl.indexOf(models.Track.fromURI(t.uri)) != -1) { <-- what was
-                if (pl.indexOf(t) != -1) { // <-- what is
-                    pl.remove(t.uri);
-
-                    var npData
-                    if (trackURI.search('spotify:local:')!=-1){
-                        npData = {  "spURL": trackURI };
-                        log('Thumbs Down',['on local track with URI',trackURI]);}
-                    else {
-                        npData = {   "spURL": trackURI,
-                                     "name": t.name.decodeForText(),
-                                     "artist": t.artists[0].name.decodeForText(),
-                                     "album": t.album.name.decodeForText()}
-                            log('Thumbs Down', ['Song: ' + t.name.decodeForText(), 'Artist: ' + t.artists[0].name.decodeForText(), 'Album: ' + t.album.name.decodeForText()]);
-                        }
-
-                    $.post("http://" + serverIP + "/cmd/thumbsdown", npData);
-                    log('Thumbs Down', ['Removed \'' + t + '\' from Shuffle and Favorite playlists']);
-                    }})})});}
-
-
-function td() {
-    thumbsDown(player.track.uri);
-}
-
-function tu() {
-    thumbsUp(player.track.uri);
-}
-
-
-function thumbsDown(trackURI) {
-    deleteTrack(trackURI);
-    nextTrack();
-
-}
-
-function thumbsUp(trackURI) {
-    models.Track.fromURI(trackURI, function (t) {
-        t.starred = true;
-        nowPlaying();
-        console.log(t);
-        var npData
-        if (trackURI.search('spotify:local:')!=-1){
-            npData = {  
-                        "spURL": trackURI };}
-        else {
-            npData = {   "spURL": trackURI,
-                         "name": t.name.decodeForText(),
-                         "artist": t.artists[0].name.decodeForText(),
-                         "album": t.album.name.decodeForText()
-                     }
-            log('Thumbs Up', ['Song: ' + t.name.decodeForText(), 'Artist: ' + t.artists[0].name.decodeForText(), 'Album: ' + t.album.name.decodeForText()]);
-        }
-
-        $.post("http://" + serverIP + "/cmd/thumbsup", npData);
-        log('Thumbs Up', ['Successfully starred \'' + t + '\'']);
-    })
-}
-
-function archiveTrack() {
+controls.archiveTrack = function () {
     var tName = player.track.toString().decodeForText();
     var tUri = player.track.uri;
     var track = player.track;
@@ -214,14 +132,8 @@ function archiveTrack() {
     };
     console.log(archiveData);
     $.post("http://" + serverIP + "/cmd/archive", archiveData);
-    nextTrack();
+    controls.next();
 
 }
 
 
-function undoStar() {
-    var track = models.player.track;
-    log("Star Removed");
-    track.starred = false;
-    nowPlaying();
-}

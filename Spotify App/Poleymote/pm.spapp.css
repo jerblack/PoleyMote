@@ -72,17 +72,18 @@ body {
 
 #toolboxDiv {
 }
-#topleft {
+
+.topleft {
     border-top-left-radius: 3px;
 }
-#topright {
+.topright {
     border-top-right-radius: 3px;
 }
 
-#bottomleft {
+.bottomleft {
     border-bottom-left-radius: 3px;
 }
-#bottomright {
+.bottomright {
     border-bottom-right-radius: 3px;
 }
 
