@@ -67,14 +67,14 @@ function drawMenu(entries) {
             1 = Display Done button & toggle menu button
             2 = multiline text
             3 = Expanding buttons
-            4 = Images 
+            4 = Images
             5 = Header*/
 
     entries.forEach(function(e){
         var fn  =    e[0];
         var txt =    e[1];
         var d   =    $(document.createElement('div')).attr('class','menuButton');
-        
+
         if (e[2] == 1) { //done button/menutoggle
             fn += ' doneButton(); toggleMenuButton();';}
 
@@ -97,12 +97,12 @@ function drawMenu(entries) {
             var h = $(document.createElement('div')).attr('id','artistDiv');
             //[arImgx.shift(), arName, arLocation, arStart, arEnd, arURL, arWiki,  arFacebook, arTwitter]
             h.append($(document.createElement('div')).attr('id','artistName').text(e[3][1]));
-            
+
             if (e[3][2] != "0") {//Location
                 h.append($(document.createElement('div')).attr('class','artistData').text(e[3][2]));
             }
 
-            if (e[3][3] != '0') {//years active from start to end 
+            if (e[3][3] != '0') {//years active from start to end
                 $(document.createElement('div'))
                     .attr('class', 'artistData')
                     .text(e[3][3] + ' - ' + e[3][4])
@@ -129,7 +129,7 @@ function drawMenu(entries) {
             menuEntries.append(h);
 
         }
-        
+
         d.attr('onclick',fn);
         d.text(txt);
 
@@ -138,7 +138,7 @@ function drawMenu(entries) {
 
         menuEntries.append(d);
         })
-    
+
     $("#menu").append(menuEntries).fadeIn(100);
     menuQueue.push(menuEntries);
     if (menuQueue.length > 1) {
@@ -309,11 +309,11 @@ $.getJSON('http://developer.echonest.com/api/v4/song/profile?api_key=31R971IRKS9
     - albums by artist
     - singles label
     - single by artist
-- Create Artist playlist    
+- Create Artist playlist
     - <Add all available artist content to new playlist named for the artist>
 - News (with button)
     - <List of recent news stories>
-    
+
 
 
 
@@ -354,14 +354,14 @@ function getArtistInfo(spURL) {
             if (b.site == 'last.fm') { arBio = b.text; }
             else if (b.site == 'wikipedia') {arWiki = b.url; }
         });
-        
+
         a.foreign_ids.filter(function (f) { //facebook/twitter links
             if (f.catalog == 'facebook') {
                 arFacebook = f.foreign_id.replace('facebook:artist:', 'http://www.facebook.com/profile.php?id=');
             } else if (f.catalog == 'twitter') {
                  arTwitter = f.foreign_id.replace('twitter:artist:', 'http://twitter.com/');}});
 
-        //building image array of last.fm images. 
+        //building image array of last.fm images.
         //If none, dump images we do have into array
         var arImgx = [];
         a.images.filter(function (i) { if (i.url.indexOf('last.fm') != -1) { arImgx.push(i.url); } })
@@ -379,7 +379,7 @@ function getArtistInfo(spURL) {
             1 = Display Done button & toggle menu button
             2 = multiline text
             3 = Expanding buttons
-            4 = Images 
+            4 = Images
             5 = Header */
 
         var artistInfo = [];
@@ -394,7 +394,7 @@ function getArtistInfo(spURL) {
             artistInfo.push(['', ' Photos'  , 3]);
             artistInfo.push(['', ''         , 4     , arImgx]);
         }
-        
+
         drawMenu(artistInfo);
     //    toggleMenuButton();
     })
@@ -449,7 +449,7 @@ function getBookmarks(user) {
             track.attr('data-trackURI', t.spotifyURI);
             track.attr('data-albumURI', t.albumURI);
 
-            
+
             var tmenu = $(document.createElement('div')).attr('class', 'bmMenuContainer');
             //artist info
             $(document.createElement('div')).attr('class', 'bmMenu').text('Artist Info').attr('data-artistURI', t.artistURI).attr('data-local', t.local).appendTo(tmenu).click(function () {
@@ -470,7 +470,7 @@ function getBookmarks(user) {
             $(document.createElement('div')).attr('class', 'bmMenu').text('Remove from Bookmarks').attr('data-trackURI', t.spotifyURI).attr('data-local', t.local).appendTo(tmenu).click(function () {
                 console.log('track URI: ' + $(this).attr('data-trackURI'));
                 sendWebRequest('/cmd/spotify/removebookmark+' + $(this).attr('data-trackURI') + '+' + user);
-                
+
 
 
 
@@ -480,7 +480,7 @@ function getBookmarks(user) {
             tmenu.appendTo('#bmEntries');
         })
         showInQueue($("#bmDIV"));
-        
+
 
 
     });
@@ -520,7 +520,7 @@ function showPlayQueue() {
                     $(this).next().slideDown(animRate);
                 }
             });
-            
+
             var tmenu = $(document.createElement('div')).attr('class', 'qMenuContainer');
             //artist info
             $(document.createElement('div')).attr('class', 'qMenu').text('Artist Info').attr('data-artistURI', t.artistURI).attr('data-local', t.local).appendTo(tmenu).click(function () {
