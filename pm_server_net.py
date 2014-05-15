@@ -1,22 +1,21 @@
 # -*- coding: utf_8 -*-
 # !/usr/bin/env python
 import socket
-from pm_server_config import http_port
 from pm_server_logging import log
+import pm_server_config as config
+
 from twisted.internet import reactor
 from websocket import create_connection
 from autobahn.websocket import (WebSocketServerFactory,
-                                WebSocketServerProtocol,
-                                listenWS)
+                                WebSocketServerProtocol, listenWS)
 
 
 def getAddress(*args):
-    global http_port
     ip = socket.gethostbyname(socket.gethostname())
     if len(args) > 0 and args[0] == 1:
         return ip
     else:
-        return ip + ':' + str(http_port)
+        return ip + ':' + str(config.http_port)
 
 # -------------------------------------- #
 # Websocket Client and Server Components #

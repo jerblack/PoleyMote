@@ -35,128 +35,129 @@ def resetDefaultConfig():
         "Changing all settings to default values," +
         " creating new 'pm_settings.ini'")
 
-    defaults = {"Local": {
-                    "Use_iTunes": True,
-                    "Index_Local_Music": True,
-                    "Music_Locations": [""]
-                    },
-                "AirFoil": {
-                    "Use_Airfoil": True,
-                    "Display_warning_if_not_connected": False
-                    },
-                "Playlists": {
-                    "Favorite_Playlists":
-                [
-                    # favorites each get a button under 'play a new playlist'
-                    # in remote and dash
-                    {
-                        "Name": "Electronic/Dance",
-                        "uri":
-                        "spotify:user:jerblack:playlist:0m2cGNVm9Zp6l9e09SiffL"
-                    }, {
-                        "Name": "Ambient/Downtempo",
-                        "uri":
-                        "spotify:user:jerblack:playlist:7a9mjhowih1tHU94Yve7lx"
-                    }, {
-                        "Name": "24 Hours - The Starck Mix",
-                        "uri":
-                        "spotify:user:jerblack:playlist:2mULB2e4ksogUFS6yGOCOG"
-                    }, {
-                        "Name": "iTunes Music",
-                        "uri":
-                        "spotify:user:jerblack:playlist:2q8vKcBUGHl0hR5TffHIlE"
-                    }, {
-                        "Name": "Classical",
-                        "uri":
-                        "spotify:user:jerblack:playlist:69NMPqX81LVyXX1py5QnOi"
-                    }
-                ],
-                    "Shuffle_Playlists":
-                [
-                    {
-                        "Name": "Electronic/Dance",
-                        "uri":
-                        "spotify:user:jerblack:playlist:0m2cGNVm9Zp6l9e09SiffL"
-                    }, {
-                        "Name": "Spotify Library 1",
-                        "uri":
-                        "spotify:user:jerblack:playlist:5XnrfPufI8J3WuDXSJrj3m"
-                    }, {
-                        "Name": "Spotify Library 2",
-                        "uri":
-                        "spotify:user:jerblack:playlist:3L5VxdSBxnUPVhwXCoThiG"
-                    }, {
-                        "Name": "Spotify Library 3",
-                        "uri":
-                        "spotify:user:jerblack:playlist:3HESEQC2UvmA1Ap1q4Q2m1"
-                    }, {
-                        "Name": "iTunes Music",
-                        "uri":
-                        "spotify:user:jerblack:playlist:1CgDrOOVdpF34v9QaRvxkq"
-                    }
-                ],
-                    "Shuffle_Playlist_Size": 50,
-                    # drop-down should have increments of 50
-                    "Automatically_add_music_to_queue_when_nearing_end": True
-                    },
-                "Bookmarks": {
-                    "Support_Multiple_Users": True,
-                    # Users are created in Settings in the dashboard
-                    "Users":
-                [
-                    {
-                        "Name": "Jeremy",
-                        "uri":
-                        "spotify:user:jerblack:playlist:4aSwU3mYsVoMV5Wnxo4AbB"
-                    }, {
-                        "Name": "Maria",
-                        "uri":
-                        "spotify:user:jerblack:playlist:6b82pMJqlIBygf3cHgZZ5p"
-                    }
-                ],
-                    "Support_Bookmarks": True,
-                    "Use_Custom_Playlist": False,
-                    "Automatically_star_track_if_bookmarked": True
-                    },
-                "Delete": {
-                    "Delete_from_current_playlist": True,
-                    "Delete_from_all_shuffle_playlists": True,
-                    "Delete_from_all_favorite_playlists": True,
-                    "Save_in_purgatory_playlist": False,
-                    "Custom_purgatory_playlist": "",
-                    "Delete_local_file": True,
-                    "Delete_from_iTunes": True,
-                    "Rate_1_star_in_iTunes": True,
-                    "Rate_1_star_in_local_tag": True,
-                    "Move_to_purgatory_folder": True,
-                    "Custom_purgatory_folder": "",
-                    "Show_option_for_deleting_all_by_artist": True,
-                    "Show_option_for_deleting_all_by_album": True,
-                    "Delete_Later_Playlist":
-                        "spotify:user:jerblack:playlist:67EixlPyzPOax02RdqquBs"
-                    },
-                "Archive": {
-                    "Archive_from_current_playlist": True,
-                    "Archive_from_all_shuffle_playlists": True,
-                    "Archive_from_all_favorite_playlists": True,
-                    "Archive_duration": "PLACEHOLDER",
-                    "Restore_to_original_playlists": True,
-                    "Restore_to_custom_playlist": False,
-                    "Custom_restore_playlist": "PLACEHOLDER URI"
-                    },
-                "Heart": {
-                    "Star_in_Spotify": True,
-                    "Add_to_bookmarks": True,
-                    "Rate_5_star_in_iTunes": True,
-                    "Rate_5_star_in_local_tag": True
-                    },
-                "Logging": {
-                    "Log_to_file": True,
-                    "Custom_log_filename": "",
-                    "Custom_log_path": "",
-                    "Verbose_Logging": True
-                    }
+    defaults = {
+        "Local": {
+            "Use_iTunes": True,
+            "Index_Local_Music": True,
+            "Music_Locations": [""]
+        },
+        "AirFoil": {
+            "Use_Airfoil": True,
+            "Display_warning_if_not_connected": False
+        },
+        "Playlists": {
+            "Favorite_Playlists":
+            [
+                # favorites each get a button under 'play a new playlist'
+                # in remote and dash
+                {
+                    "Name": "Electronic/Dance",
+                    "uri":
+                    "spotify:user:jerblack:playlist:0m2cGNVm9Zp6l9e09SiffL"
+                }, {
+                    "Name": "Ambient/Downtempo",
+                    "uri":
+                    "spotify:user:jerblack:playlist:7a9mjhowih1tHU94Yve7lx"
+                }, {
+                    "Name": "24 Hours - The Starck Mix",
+                    "uri":
+                    "spotify:user:jerblack:playlist:2mULB2e4ksogUFS6yGOCOG"
+                }, {
+                    "Name": "iTunes Music",
+                    "uri":
+                    "spotify:user:jerblack:playlist:2q8vKcBUGHl0hR5TffHIlE"
+                }, {
+                    "Name": "Classical",
+                    "uri":
+                    "spotify:user:jerblack:playlist:69NMPqX81LVyXX1py5QnOi"
                 }
+            ],
+            "Shuffle_Playlists":
+            [
+                {
+                    "Name": "Electronic/Dance",
+                    "uri":
+                    "spotify:user:jerblack:playlist:0m2cGNVm9Zp6l9e09SiffL"
+                }, {
+                    "Name": "Spotify Library 1",
+                    "uri":
+                    "spotify:user:jerblack:playlist:5XnrfPufI8J3WuDXSJrj3m"
+                }, {
+                    "Name": "Spotify Library 2",
+                    "uri":
+                    "spotify:user:jerblack:playlist:3L5VxdSBxnUPVhwXCoThiG"
+                }, {
+                    "Name": "Spotify Library 3",
+                    "uri":
+                    "spotify:user:jerblack:playlist:3HESEQC2UvmA1Ap1q4Q2m1"
+                }, {
+                    "Name": "iTunes Music",
+                    "uri":
+                    "spotify:user:jerblack:playlist:1CgDrOOVdpF34v9QaRvxkq"
+                }
+            ],
+            "Shuffle_Playlist_Size": 25,
+            # drop-down should have increments of 50
+            "Automatically_add_music_to_queue_when_nearing_end": True
+                    },
+        "Bookmarks": {
+            "Support_Multiple_Users": True,
+            # Users are created in Settings in the dashboard
+            "Users":
+            [
+            {
+                "Name": "Jeremy",
+                "uri":
+                "spotify:user:jerblack:playlist:4aSwU3mYsVoMV5Wnxo4AbB"
+            }, {
+                "Name": "Maria",
+                "uri":
+                "spotify:user:jerblack:playlist:6b82pMJqlIBygf3cHgZZ5p"
+            }
+        ],
+            "Support_Bookmarks": True,
+            "Use_Custom_Playlist": False,
+            "Automatically_star_track_if_bookmarked": True
+            },
+        "Delete": {
+            "Delete_from_current_playlist": True,
+            "Delete_from_all_shuffle_playlists": True,
+            "Delete_from_all_favorite_playlists": True,
+            "Save_in_purgatory_playlist": False,
+            "Custom_purgatory_playlist": "",
+            "Delete_local_file": True,
+            "Delete_from_iTunes": True,
+            "Rate_1_star_in_iTunes": True,
+            "Rate_1_star_in_local_tag": True,
+            "Move_to_purgatory_folder": True,
+            "Custom_purgatory_folder": "",
+            "Show_option_for_deleting_all_by_artist": True,
+            "Show_option_for_deleting_all_by_album": True,
+            "Delete_Later_Playlist":
+            "spotify:user:jerblack:playlist:67EixlPyzPOax02RdqquBs"
+            },
+        "Archive": {
+            "Archive_from_current_playlist": True,
+            "Archive_from_all_shuffle_playlists": True,
+            "Archive_from_all_favorite_playlists": True,
+            "Archive_duration": "PLACEHOLDER",
+            "Restore_to_original_playlists": True,
+            "Restore_to_custom_playlist": False,
+            "Custom_restore_playlist": "PLACEHOLDER URI"
+            },
+        "Heart": {
+            "Star_in_Spotify": True,
+            "Add_to_bookmarks": True,
+            "Rate_5_star_in_iTunes": True,
+            "Rate_5_star_in_local_tag": True
+            },
+        "Logging": {
+            "Log_to_file": True,
+            "Custom_log_filename": "",
+            "Custom_log_path": "",
+            "Verbose_Logging": True
+            }
+        }
     f = open("pm_settings.ini", "w")
     f.write(str(defaults))
     f.close()

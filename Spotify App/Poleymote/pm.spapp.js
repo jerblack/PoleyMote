@@ -27,6 +27,7 @@ $(function () { // Starts when app loads
     // Update the page when the app loads
     nowplaying.dashboard();
     dashboard.toolButtons();
+    utils.startWorker();
 
     // Listen for track changes and update the page
     player.observe(models.EVENT.CHANGE, function (event) {
@@ -212,10 +213,10 @@ dashboard.playlistButtons = function () {
     $("#favPlaylists").children("button").remove();
     favPLs.forEach(function (p) {
         var name = p.Name;
-        var pl = $(document.createElement('button')).attr('class', 'toolButtons');
-        pl.text(name);
-        pl.attr('onclick', 'controls.play.playlist("' + p.uri + '");')
-        $("#favPlaylists").append(pl);
+        var plBtn = $(document.createElement('button')).attr('class', 'toolButtons');
+        plBtn.text(name);
+        plBtn.attr('onclick', 'controls.play.playlist("' + p.uri + '");')
+        $("#favPlaylists").append(plBtn);
     })
     $($("#favPlaylists").children("button")[$("#favPlaylists").children("button").length - 1]).attr('class', 'bottomToolButton toolButtons')
 }

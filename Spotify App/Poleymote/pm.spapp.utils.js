@@ -11,6 +11,41 @@ remove = {
 }
 star = {};
 
+var worker;
+
+utils.startWorker = function() {
+    worker = new Worker('pm.spapp.worker.js'); 
+    worker.onmessage = function(e){
+            // console.log(e.data)
+            rsp = e.data;
+            switch (rsp.fn) {
+                case 'dedupe':
+                    dedupe.delete(rsp.data);
+                    break;
+                case 'log':
+                    log(rsp.title, rsp.text);
+                    break;
+                case 'shuffle':
+                    if (rsp.caller == 'playshuffle'){
+                        controls.play.shuffle3.finish(rsp.data);
+                    } else if (rsp.caller === 'appendshuffle'){
+                        controls.appendToQueue(rsp.data);
+                    }
+                    break;
+                default:
+                    console.log(e.data);
+                };
+            }
+        }
+
+utils.doInWorker = function (f,d) {
+    if (worker.toString() != '[object Worker]') {
+        utils.startWorker;
+    }
+    worker.postMessage({fn: f, data: d});
+    console.log('"' + f + '" passed into web worker');
+}
+
 utils.sonos.connect = function () {
     $.get('http://'+serverIP+'/cmd/connectsonos')
 }
@@ -51,38 +86,48 @@ utils.buildOfflinePlaylist = function () {
     log('Offline Playlist', ["Offline playlist has been populated", chunk + " tracks from each of the shuffle playlists have been added"]);
 }
 
-utils.doInWorker = function (f,d) {
-    var w = new Worker('pm.spapp.worker.js'); 
-    w.onmessage = function(e){
-        // console.log(e.data)
-        rsp = e.data;
-        switch (rsp.fn) {
-            case 'dedupe':
-                dedupe.delete(rsp.data);
-                break;
-            case 'log':
-                log(rsp.title, rsp.text);
-                break;
-        }
-    }; 
-    w.postMessage({fn:f,data:d});
-    console.log('Started web worker for function "' + f + '"');
-}
-
 var config;
 
 utils.getSettings = function () {
     $.getJSON("http://" + serverIP + "/cmd/getsettings", function (data) {
         config = data;
-        dashboard.playlistButtons();
+        utils.onSettingsLoad();
     })
 }
+
+utils.onSettingsLoad = function() {
+    dashboard.playlistButtons();
+    utils.getPlaylists();
+}
+
+
+var spls = [];
+var fpls = [];
+utils.getPlaylists = function () {
+    spls = [];
+    fpls = [];
+    config.Playlists.Shuffle_Playlists.forEach(function(spl){
+        models.Playlist.fromURI(spl.uri, function(p){
+            if (spls.indexOf(p) == -1) {
+                spls.push(p);
+            }
+        })
+    })
+    config.Playlists.Favorite_Playlists.forEach(function(fpl){
+        models.Playlist.fromURI(fpl.uri, function(p){
+            if (fpls.indexOf(p) == -1) {
+                fpls.push(p);
+            }
+        })
+    })
+};
+
 
 dedupe.find = function () {
     log('Duplicate Remover', ['Starting search for duplicate tracks', 'Checking for duplicates across all Shuffle playlists', 'Starting at '+ utils.displayTime()]);
     tracks = [];
     $.getJSON("http://" + serverIP + "/cmd/getthumbsdown", function (data) {
-        pl = {}; 
+        var pl = {}; 
         pl['playlist'] = 'thumbs_down';
         pl['tracks'] = data
         tracks.push(pl);
@@ -130,38 +175,25 @@ remove.artist.fromURI = function (spArtistURI) {
     models.Artist.fromURI(spArtistURI, function(a){
         log("Removing Artist", ["Removing all tracks from artist",
                                 a.name.decodeForText()]);
-    })
-
-    var spl = config.Playlists.Shuffle_Playlists;
-    var fpl = config.Playlists.Favorite_Playlists;
-    var plArray = []
-    var count = 0;
-    spl.forEach(function(p){
-        if (plArray.indexOf(p.uri) == -1) {
-            plArray.push(p.uri);}});
-    fpl.forEach(function(p){
-        if (plArray.indexOf(p.uri) == -1) {
-            plArray.push(p.uri);}});
-    plArray.forEach(function(pl){
-        models.Playlist.fromURI(pl, function(p){
-            console.log("Now searching playlist '" + p.name.decodeForText() + "'");
-            p.tracks.forEach(function (t) {
-                if (t.artists[0].uri == spArtistURI){
-                    p.remove(t.uri);
-                    count++;
-                    models.Track.fromURI(t.uri,function(tr){
-                        log('', "Removed track '" + tr.toString().decodeForText() + "'");
-                    })}
+        var count = 0;
+        var pl = fpls.concat(spls);
+        pl.forEach(function(p){
+        console.log("Now searching playlist '" + p.name.decodeForText() + "'");
+        p.tracks.forEach(function (t) {
+            if (t.artists[0].uri == spArtistURI) {
+                p.remove(t.uri);
+                count++;
+                models.Track.fromURI(t.uri, function(tr){
+                    log('', "Removed track '" + tr.toString().decodeForText() + "'");
                 })
-            })
+            }})
         })
-    models.Artist.fromURI(spArtistURI, function(a) {
-        log('Removing Artist', ['Found and removed '+count+' tracks','by artist '+a.name.decodeForText(),'from your favorite and shuffle playlists']);
-})}
+    })
+}
 
 remove.album.current = function () {
     var t = player.track;
-    control.next();
+    controls.next();
     remove.album.fromURI(t.album.uri);}
   
 remove.album.fromURI = function (spAlbumURI) {
@@ -172,19 +204,10 @@ remove.album.fromURI = function (spAlbumURI) {
     }
     models.Album.fromURI(spAlbumURI, function(a){
         log("Removing Album", ["Removing all tracks from album", a.name.decodeForText(), 'by ' + a.artist.name.decodeForText()]);
-    })
-    var spls = config.Playlists.Shuffle_Playlists;
-    var fpls = config.Playlists.Favorite_Playlists;
-    var plArray = [];
-    var count = 0;
-    spls.forEach(function(spl){
-        if (plArray.indexOf(spl.uri) == -1) {
-            plArray.push(spl.uri);}});
-    fpls.forEach(function(fpl){
-        if (plArray.indexOf(fpl.uri) == -1) {
-            plArray.push(fpl.uri);}});
-    plArray.forEach(function(pl){
-        models.Playlist.fromURI(pl, function(p){
+
+        var count = 0;
+        var pl = fpls.concat(spls);
+        pl.forEach(function(p){
             console.log("Now searching playlist '" + p.name.decodeForText() + "'");
             p.tracks.forEach(function (t) {
                   if (t.album.uri == spAlbumURI){
@@ -194,10 +217,9 @@ remove.album.fromURI = function (spAlbumURI) {
                         log('', "Removed track '" + tr.toString().decodeForText() + "'");
                     });
                    };  
+                })
             })
-        })
-    })
-    models.Album.fromURI(spAlbumURI, function(a) {
+
         log('Removing Album', ['Found and removed '+count+' tracks',
                             'from album "' + a.name.decodeForText() + '"',
                             'by "' + a.artist.name.decodeForText() + '"',
@@ -214,50 +236,40 @@ remove.track.current = function () {
 
 remove.track.fromURI = function (trackURI) {
     var d = config.Delete;
-    var plArray = []
+    var pl = [];
     var foundSomething = false;
 
     if (d.Delete_from_all_shuffle_playlists) {
-        config.Playlists.Shuffle_Playlists.forEach(function (p) { 
-            plArray.push(p.uri)
-        });}
+        pl = pl.concat(spls);
+    }
 
     if (d.Delete_from_all_favorite_playlists) {
-        config.Playlists.Favorite_Playlists.forEach(function (p) {
-            plArray.push(p.uri);
-        });}
+        pl = pl.concat(fpls);
+    }
 
-    if (d.Delete_from_current_playlist) {
-        if (player.context != null) {
-            if (player.context.search("spotify:internal:temp_playlist") != 0) {
-                plArray.push(player.context);
-            }}}
-
-    plArray.forEach(function (p) {
-        models.Playlist.fromURI(p, function (pl) {
-            if (pl.indexOf(trackURI) != -1) {
-                pl.remove(trackURI);
-                    var npData;
-                    models.Track.fromURI(trackURI, function(t){
-                        if (trackURI.search('spotify:local:')!=-1){
-                            npData = { "spURL": trackURI };
-                            log('Thumbs Down',['on local track ',trackURI]);
-                        } else {
-                            npData = {  "spURL": trackURI,
-                                        "name": t.name.decodeForText(),
-                                        "artist": t.artists[0].name.decodeForText(),
-                                        "album": t.album.name.decodeForText()
-                                    }
-                        log('Thumbs Down', ['Song: ' + t.name.decodeForText(),
-                                            'Artist: ' + t.artists[0].name.decodeForText(), 
-                                            'Album: ' + t.album.name.decodeForText()]);
-                        }
-                        t.starred = false;
-                        $.post("http://" + serverIP + "/cmd/thumbsdown", npData);
-                    })
-                }
-        })})
-}
+    pl.forEach(function (p) {
+        if (p.indexOf(trackURI) != -1) {
+            p.remove(trackURI);
+                var npData;
+                models.Track.fromURI(trackURI, function(t){
+                    if (trackURI.search('spotify:local:')!=-1){
+                        npData = { "spURL": trackURI };
+                        log('Thumbs Down',['on local track ',trackURI]);
+                    } else {
+                        npData = {  "spURL": trackURI,
+                                    "name": t.name.decodeForText(),
+                                    "artist": t.artists[0].name.decodeForText(),
+                                    "album": t.album.name.decodeForText()
+                                }
+                    log('Thumbs Down', ['Song: ' + t.name.decodeForText(),
+                                        'Artist: ' + t.artists[0].name.decodeForText(), 
+                                        'Album: ' + t.album.name.decodeForText()]);
+                    }
+                    t.starred = false;
+                    $.post("http://" + serverIP + "/cmd/thumbsdown", npData);
+                })
+            }
+        })}
               
 var deleteLater = 0;
 var deleteLaterTrack;      

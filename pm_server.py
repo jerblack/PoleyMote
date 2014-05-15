@@ -7,14 +7,10 @@ from gevent.pywsgi import WSGIServer
 import web, time, threading, os, sys, urllib, requests, json
 import sqlite3 as sql
 
-from pm_server_local import (deleteLocalFile, deleteFromItunes,
-                             itunesThumbsUp, getLocalTrackInfo,
-                             rateLocalFile)
 from pm_server_logging import log
-from pm_server_config import (readConfig, local_delete_folder,
-                               local_archive_folder, db,
-                               sp_app_name, http_port)
-from pm_server_net import getAddress, fireCommand, startBroadcastServer
+import pm_server_local as local
+import pm_server_config as config
+import pm_server_net as net
 web.config.debug = True
 
 
@@ -82,13 +78,13 @@ def handleCMD(cmd, opt):
     global trackInfo, tid, bmInfo, qInfo
 
     if (cmd == 'spotify'):
-        fireCommand(sp_app_name + opt)
+        net.fireCommand(config.sp_app_name + opt)
         return 0
 
     elif (cmd == "getsettings"):
         log("handleCMD",
             "'/cmd/getsettings' -> downloading settings from server")
-        return json.dumps(readConfig())
+        return json.dumps(config.readConfig())
 
     elif (cmd == "connectsonos"):
         log("handleCMD",
@@ -124,22 +120,22 @@ def handleCMD(cmd, opt):
             "'/cmd/getThumbsDown' -> Sending list of 'thumbs down' tracks")
         return json.dumps(getThumbsDown())
 
-    elif (cmd == "requestbookmarks"):
-        log("handleCMD",
-            "'/cmd/getbookmark/" + opt +
-            "' -> Send WebSocket 'getbookmarks+" + opt +
-            "' to PoleyMote Spotify app. -> Return result")
-        bmInfo[opt] = ''
-        fireCommand('getbookmarks+' + opt)
-        while (bmInfo[opt] == ''):
-            time.sleep(1)
-        result = bmInfo[opt]
-        return result
+    # elif (cmd == "requestbookmarks"):
+    #     log("handleCMD",
+    #         "'/cmd/getbookmark/" + opt +
+    #         "' -> Send WebSocket 'getbookmarks+" + opt +
+    #         "' to PoleyMote Spotify app. -> Return result")
+    #     bmInfo[opt] = ''
+    #     net.fireCommand('getbookmarks+' + opt)
+    #     while (bmInfo[opt] == ''):
+    #         time.sleep(1)
+    #     result = bmInfo[opt]
+    #     return result
 
-    elif ("rcvbookmarks" in cmd):
-        cmds = cmd.split('+')
-        user = cmds[1].lower()
-        bm = json.dumps(opt)
+    # elif ("rcvbookmarks" in cmd):
+    #     cmds = cmd.split('+')
+    #     user = cmds[1].lower()
+    #     bm = json.dumps(opt)
         # print opt
         # f = open('dict.txt','w')
         # f.write(str(opt))
@@ -154,21 +150,21 @@ def handleCMD(cmd, opt):
         # opt['user'] +
         # "' -> Receiving bookmark data from PoleyMote Spotify app.")
 
-        bmInfo[user] = bm
-        return 0
+        # bmInfo[user] = bm
+        # return 0
 
-    elif (cmd == "updatequeue"):
-        log("handleCMD",
-            "'/cmd/updatequeue' -> " +
-            "New queue info being received from Spotify app")
-        qInfo = json.dumps(opt)
-        return 0
+    # elif (cmd == "updatequeue"):
+    #     log("handleCMD",
+    #         "'/cmd/updatequeue' -> " +
+    #         "New queue info being received from Spotify app")
+    #     qInfo = json.dumps(opt)
+    #     return 0
 
-    elif (cmd == "getqueue"):
-        log("handleCMD",
-            "'/cmd/getqueue' -> " +
-            "Client requested current queue")
-        return qInfo
+    # elif (cmd == "getqueue"):
+    #     log("handleCMD",
+    #         "'/cmd/getqueue' -> " +
+    #         "Client requested current queue")
+    #     return qInfo
 
     elif (cmd == "thumbsdown"):
         log("handleCMD", "'/cmd/thumbsdown' -> " +
@@ -185,10 +181,10 @@ def handleCMD(cmd, opt):
             "track archived")
         archive(opt)
 
-    elif (cmd == "getalbums"):
-        log("handleCMD", "'/cmd/getalbums' -> " +
-            "retrieving album info for")
-        return json.dumps(getAlbumsFromArtist(opt))
+    # elif (cmd == "getalbums"):
+    #     log("handleCMD", "'/cmd/getalbums' -> " +
+    #         "retrieving album info for")
+    #     return json.dumps(getAlbumsFromArtist(opt))
 
 
 # spotify:local:Butterfly+Bones:BIRP%21+March+2010:%3c3:228
@@ -196,13 +192,13 @@ def archive(opt):
     t = opt['trackURI']
     abs_path = ''
     if (t.find('spotify:local:') != -1):
-        info = getLocalTrackInfo(t)
-        dst_path = local_archive_folder
+        info = local.getLocalTrackInfo(t)
+        dst_path = config.local_archive_folder
         split = os.path.split(info['location'])
         src_path, fname = split[0], split[1]
         abs_path = os.path.join(dst_path, fname)
-        if not os.path.isdir(local_archive_folder):
-            os.makedirs(local_archive_folder)
+        if not os.path.isdir(config.local_archive_folder):
+            os.makedirs(config.local_archive_folder)
         log("thumbsDown",
             "Moving '" + fname + "' to '" + dst_path + "'")
 
@@ -211,7 +207,7 @@ def archive(opt):
         except WindowsError:
             pass
 
-    conn = sql.connect(db)
+    conn = sql.connect(config.db)
     c = conn.cursor()
     c.execute('CREATE TABLE IF NOT EXISTS archive' +
               '(track TEXT,spURI TEXT, playlists TEXT,' +
@@ -242,18 +238,18 @@ def thumbsUp(opt):
         localTrack = [artist, album, name, duration]
         # print localTrack
         # if (h['Rate_5_star_in_iTunes'] == True):
-        itunesThumbsUp(localTrack)
+        local.itunesThumbsUp(localTrack)
         log("thumbsUp",
             "Rated 5-stars:'" + str(localTrack) + "' --> iTunes")
         # if (h['Rate_5_star_in_local_tag'] == True):
-        rateLocalFile(localTrack, 252)
+        local.rateLocalFile(localTrack, 252)
         log("thumbsUp",
             "Rated 5-stars:'" + str(localTrack) + "' --> local file")
-    conn = sql.connect(db)
+    conn = sql.connect(config.db)
     c = conn.cursor()
     c.execute('CREATE TABLE IF NOT EXISTS thumbs_up(track TEXT' +
               ', artist TEXT, album TEXT, trackURI TEXT, date TEXT);')
-    c.execute("INSERT INTO thumbs_up VALUES(?,?,?,?,date('now'));",
+    c.execute("INSERT INTO thumbs_up VALUES(?, ?, ?, ?, date('now'));",
               (name, artist, album, trackURI))
     conn.commit()
     conn.close()
@@ -264,6 +260,14 @@ def thumbsDown(opt):
     name, artist, album = '', '', ''
     if (opt['spURL'].find('spotify:local:') == -1):
         name, artist, album = opt['name'], opt['artist'], opt['album']
+        conn = sql.connect(config.db)
+        c = conn.cursor()
+        c.execute('CREATE TABLE IF NOT EXISTS thumbs_down(track TEXT'
+                  ', artist TEXT, album TEXT, trackURI TEXT, date TEXT);')
+        c.execute("INSERT INTO thumbs_down VALUES(?, ?, ? , ?, date('now'));",
+                  (name, artist, album, trackURI))
+        conn.commit()
+        conn.close()
     else:
         s = opt['spURL'].replace('spotify:local:', '').replace(":", "|||")
         s = urllib.unquote(s)
@@ -278,37 +282,25 @@ def thumbsDown(opt):
         # print localTrack
         log("thumbsDown",
             "Moving '" + str(localTrack) +
-            "' to '" + local_delete_folder + "'")
-        deleteLocalFile(localTrack)
+            "' to '" + config.local_delete_folder + "'")
         # elif (d['Delete_local_file'] == True):
-        #     os.remove(localTrackPath);
-        #     log("thumbsDown","Deleted file '"+localTrackPath+"'")
+        local.deleteLocalFile(localTrack)
         # elif (d['Rate_1_star_in_local_tag'] == True):
-        #     rateLocalFile(localTrackPath,1)
-        #  log("thumbsDown","Rated 1 star '"+localTrackPath+"' in local file")
+        #     local.rateLocalFile(localTrackPath,1)
+        #     log("thumbsDown","Rated 1 star '"+localTrackPath+
+        #                      "' in local file")
         # if (d['Delete_from_iTunes'] == True):
-        # deleteLocalFile(localTrackPath)
-        deleteFromItunes(localTrack)
-
+        local.deleteFromItunes(localTrack)
         log("thumbsDown", "Deleting '" + str(localTrack) + "' from iTunes")
         # elif (d['Rate_1_star_in_iTunes'] == True):
         #     itunesThumbsDown(localTrackPath)
         #     log("thumbsDown","Rated 1 star '"+localTrackPath+"' in iTunes")
-    conn = sql.connect(db)
-    c = conn.cursor()
-    c.execute('CREATE TABLE IF NOT EXISTS thumbs_down(track TEXT' +
-              ', artist TEXT, album TEXT, trackURI TEXT, date TEXT);')
-    c.execute('''INSERT INTO thumbs_down VALUES(?, ?, ? , ?, date('now'));''',
-              (name, artist, album, trackURI))
-    conn.commit()
-    conn.close()
 
 
 def getThumbsDown():
-    global db
-    conn = sql.connect(db)
+    conn = sql.connect(config.db)
     c = conn.cursor()
-    c.execute('select trackURI from thumbs_down;', ())
+    c.execute('SELECT trackURI FROM thumbs_down;', ())
     r = c.fetchall()
     t = []
     for i in r:
@@ -333,8 +325,8 @@ def getStarted():
     """
     log("getStarted",
         "Sending 'refresh' message to PoleyMote Spotify app; reading settings")
-    fireCommand('refresh')
-    readConfig()
+    net.fireCommand('refresh')
+    config.readConfig()
 
 trackInfo = {'id': 0}
 tid = 0
@@ -377,7 +369,7 @@ def trackUpdate(d):
         trackInfo['artistURI'] = d.artistURI
         trackInfo['albumURI'] = d.albumURI
     elif (d.local == 'true'):
-        lt = getLocalTrackInfo(d.spotifyURI)
+        lt = local.getLocalTrackInfo(d.spotifyURI)
         if lt is not None:
             trackInfo['artURL'] = lt['img']
             trackInfo['year'] = lt['year']
@@ -441,13 +433,13 @@ def getArt(spTrackURL, x=False):
 # ---- #
 if __name__ == "__main__":
     log('Hello', "Welcome to PoleyMote")
-    log('IP', 'PoleyMote now running on http://' + getAddress())
+    log('IP', 'PoleyMote now running on http://' + net.getAddress())
     mw = web.httpserver.StaticMiddleware
     app = web.application(urls, globals()).wsgifunc(mw)
     try:
-        threading.Timer(1, startBroadcastServer).start()
+        threading.Timer(1, net.startBroadcastServer).start()
         threading.Timer(3, getStarted).start()
-        WSGIServer(('', http_port), app).serve_forever()
+        WSGIServer(('', config.http_port), app).serve_forever()
     except KeyboardInterrupt:
         sys.exit()
 # ----------- #

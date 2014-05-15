@@ -1,15 +1,14 @@
 # -*- coding: utf_8 -*-
 # !/usr/bin/env python
-import os, plistlib, warnings, urllib
+import os, plistlib, warnings, urllib, struct, binascii, glob, HTMLParser
+import sqlite3 as sql
 from win32com.client import Dispatch, pythoncom
-import struct, binascii, glob
 from mutagen import File
 from mutagen.id3 import ID3, POPM, PCNT
+
 from pm_server_logging import log
-from pm_server_net import getAddress
-from pm_server_config import local_delete_folder, db
-import HTMLParser as hp
-import sqlite3 as sql
+import pm_server_net as net
+import pm_server_config as config
 
 
 library_path = ''
@@ -33,11 +32,10 @@ def getiTunesLibraryXMLPath():
 
 
 def indexItunesLibrary():
-    global db
     f = getiTunesLibraryXMLPath()
     x = plistlib.readPlist(f)
     tracks = x['Tracks']
-    conn = sql.connect(db)
+    conn = sql.connect(config.db)
     conn.text_factory = str
     c = conn.cursor()
     c.execute('DROP TABLE IF EXISTS itunes;')
@@ -118,7 +116,6 @@ def parseSPurl(spURL):
 
 
 def getLocalTrackInfo(track):
-    global db
     s = track
     if type(s) == str or type(s) == unicode:
         s = parseSPurl(s)
@@ -133,7 +130,7 @@ def getLocalTrackInfo(track):
     # , album: '" + urllib.unquote(s[1]) + "', title: '" +
     # urllib.unquote(s[2]) + "', duration: '" + duration + "'")
 
-    conn = sql.connect(db)
+    conn = sql.connect(config.db)
     c = conn.cursor()
     c.execute('SELECT * FROM itunes WHERE artist LIKE ? AND album ' +
               'LIKE ? AND name LIKE ? AND duration = ?;',
@@ -165,7 +162,7 @@ def getLocalTrackInfo(track):
         t['persistent_id'] = r[8]
         t['pid_low'] = r[9]
         t['pid_high'] = r[10]
-        t['img'] = 'http://' + getAddress() + '/' + r[11]
+        t['img'] = 'http://' + net.getAddress() + '/' + r[11]
         conn.close()
         return t
     else:
@@ -179,7 +176,7 @@ def deleteLocalFile(track):
     lp = (getLocalTrackInfo(track))['location']
     # Z://iTunes//iTunes Media//Music//Following//
     # KCRW's Today's Top Tune//Following.mp3
-    dst_path = local_delete_folder
+    dst_path = config.local_delete_folder
     # Z:/iTunes/Deleted/
     split = os.path.split(lp)
     src_path = split[0]
@@ -195,9 +192,9 @@ def deleteLocalFile(track):
 
 
 def cleanPath(path):
-    h = hp.HTMLParser()
+    hp = HTMLParser.HTMLParser()
     p = path.replace('file://localhost/', '').replace('/', '//')
-    p = h.unescape(urllib.unquote(p))
+    p = hp.unescape(urllib.unquote(p))
     if not (os.path.exists(p)):
         s = ''
         for i in p:
