@@ -102,17 +102,25 @@ def indexItunesLibrary():
 
 
 def parseSPurl(spURL):
-    m = urllib.unquote(spURL.replace('spotify:local:', '').replace(":", "|||"))
-    m = m.replace(' +', ' ').encode('ascii', 'replace')
-    m = m.replace('??', '?').split('|||')
-    s = []
-    for i in m:
-        s.append((i.split('?'))[0])
-    artist = s[0]
-    album = s[1]
-    title = s[2]
-    duration = s[3]
-    return [artist, album, title, duration]
+    if 'spotify:local:' in spURL:
+        m = spURL.replace('spotify:local:', '')
+        m = m.split(':')
+        a = []
+        for i in m:
+            s = urllib.unquote(i)
+            s = s.replace('+', ' ')
+            s = s.encode('ascii', 'replace')
+            s = s.replace('??', '?')
+            s = s.split('?')
+            a.append(s[0])
+
+        artist = a[0]
+        album = a[1]
+        title = a[2]
+        duration = a[3]
+        return [artist, album, title, duration]
+    else:
+        return None
 
 
 def getLocalTrackInfo(track):
@@ -124,11 +132,12 @@ def getLocalTrackInfo(track):
     album = '%' + (s[1].split('?'))[0] + '%'
     title = '%' + (s[2].split('?'))[0] + '%'
     duration = s[3]
-    # log('getLocalTrackInfo',"Called for '" + spURL + "'")
-    # log('getLocalTrackInfo',"Searching index using artist:
-    # '" + urllib.unquote(s[0]) + "'
-    # , album: '" + urllib.unquote(s[1]) + "', title: '" +
-    # urllib.unquote(s[2]) + "', duration: '" + duration + "'")
+    log('getLocalTrackInfo', "Called for '" + str(s) + "'")
+    log('getLocalTrackInfo', "Searching index using artist:'" +
+                             urllib.unquote(s[0]) + "', album: '" +
+                             urllib.unquote(s[1]) + "', title: '" +
+                             urllib.unquote(s[2]) + "', duration: '" +
+                             duration + "'")
 
     conn = sql.connect(config.db)
     c = conn.cursor()
@@ -145,11 +154,7 @@ def getLocalTrackInfo(track):
         c.execute('SELECT * FROM itunes WHERE artist LIKE ? AND name LIKE ?;',
                   (artist, title))
         r = c.fetchone()
-    # print 'r is : ', str(r)
-    # print r
-    # print 's is : ', str(s)
-    # print 'type : ',type(r)
-    # print track
+
     if r is not None:
         t = {}
         t['location'] = eval(r[1])
