@@ -59,15 +59,16 @@ controls.play.shuffle = function() {
     var pl_index = Math.floor(Math.random() * spls.length);
     var thispl = spls[pl_index];
     q.add(thispl.tracks[Math.floor(Math.random() * thispl.length)]);
-    qPLs.push(thispl.uri);
+    qPLs.push(pl_index);
     player.play(q.tracks[0], q);
 
+    // setTimeout to give enough time to update Now Playing in dash and server
     setTimeout(function(){
         for (var i = 0; i < spl_size - 1; i++) {
             var pl_index = Math.floor(Math.random() * spls.length);
             var thispl = spls[pl_index];
             q.add(thispl.tracks[Math.floor(Math.random() * thispl.length)]);
-            qPLs.push(thispl.uri);
+            qPLs.push(pl_index);
             };
         console.log('finished at ' + utils.displayTime());
         }, 500)
@@ -77,14 +78,16 @@ controls.play.shuffle = function() {
 controls.appendToQueue = function () {
     if (config.Playlists.Automatically_add_music_to_queue_when_nearing_end) {
         if (player.context === q.uri) {
-            if (q.length - (q.indexOf(player.track)) < 5 && q.length - (q.indexOf(player.track)) > 2) {
+            // if (q.length - (q.indexOf(player.track)) < 5 && q.length - (q.indexOf(player.track)) > 2) {
+            if (q.length - (q.indexOf(player.track)) < 5) {
+
                 try {
                     var spl_size = config.Playlists.Shuffle_Playlist_Size;
                     for (var i = 0; i < spl_size - 1; i++) {
                         var pl_index = Math.floor(Math.random() * spls.length);
                         var thispl = spls[pl_index];
                         q.add(thispl.tracks[Math.floor(Math.random() * thispl.length)]);
-                        qPLs.push(thispl.uri);
+                        qPLs.push(pl_index);
                         };
                     log('Now Playing', ["Shuffle queue almost empty", "Now refilling with " + spl_size + " new tracks."]);
                 } catch (err) {
@@ -152,7 +155,7 @@ controls.archiveTrack = function () {
 //     // add first song to get music started immediately
 //     models.Playlist.fromURI(spls[Math.floor(Math.random() * spls.length)].uri, function(p){
 //         q.add(p.tracks[Math.floor(Math.random() * p.length)]);
-//         qPLs.push(p.uri);
+//         qPLs.push(pl_index);
 //         player.play(q.tracks[0], q);
 //     })
 //     setTimeout(function(){

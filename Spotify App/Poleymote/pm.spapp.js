@@ -12,8 +12,8 @@ var sp = getSpotifyApi(1),
 
 var serverIP = "192.168.0.50";
 
-var queue = new Array();
-var queuePLs = new Array();
+var q = new Array();
+var qPLs = new Array();
 
 
 $(function () { // Starts when app loads
@@ -35,7 +35,7 @@ $(function () { // Starts when app loads
 
 			if (player.context != undefined) {
 			    if (player.context.search("internal:temp_playlist") != -1) {
-                    if (queuePLs.length > 0){
+                    if (qPLs.length > 0){
                         nowplaying.log(true, true); 
                     } else {
                         nowplaying.log(false, true);

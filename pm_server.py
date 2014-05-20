@@ -86,6 +86,12 @@ def handleCMD(cmd, opt):
             "'/cmd/getsettings' -> downloading settings from server")
         return json.dumps(config.readConfig())
 
+    elif (cmd == "updatesettings"):
+        log("handleCMD",
+            "'/cmd/updatesettings' -> settings are being updated")
+        config.updateConfig(opt)
+        return
+
     elif (cmd == "connectsonos"):
         log("handleCMD",
             "'/cmd/connectsonos -> reconnect to the Sonos")
@@ -181,10 +187,13 @@ def handleCMD(cmd, opt):
             "track archived")
         archive(opt)
 
-    # elif (cmd == "getalbums"):
-    #     log("handleCMD", "'/cmd/getalbums' -> " +
-    #         "retrieving album info for")
-    #     return json.dumps(getAlbumsFromArtist(opt))
+    elif (cmd == "getallalbums"):
+        log("handleCMD", "'/cmd/getallalbums' -> " + opt)
+        return json.dumps(getAlbumsForArtist(opt))
+
+    elif (cmd == "getalltracks"):
+        log("handleCMD", "'/cmd/getalltracks' -> " + opt)
+        return json.dumps(getTracksForAlbum(opt))
 
 
 # spotify:local:Butterfly+Bones:BIRP%21+March+2010:%3c3:228
@@ -452,43 +461,70 @@ if __name__ == "__main__":
 # -------------- #
 
 
-root = 'http://ws.spotify.com/lookup/1/.json?'
+lookup_uri = 'http://ws.spotify.com/lookup/1/.json?'
+search_uri = 'http://ws.spotify.com/search/1/artist.json?q='
+
+pho = 'spotify:artist:1xU878Z1QtBldR7ru9owdU'
 
 
-def getAlbumsFromArtist(spURI):
-    global root
-
-    r = requests.get(root + 'uri=' + spURI + '&extras=album')
+def getSpURIs(local_uri):
+    track = local.parseSPurl(local_uri)
+    r = requests.get(search_uri + track[0])
     while (r.text == ''):
         time.sleep(0.1)
     x = json.loads(r.text)
-    y = x['artist']['albums']
-    artistName = x['artist']['name']
-    albums = {}
-    for i in y:
-        if i['album']['artist'] == artistName:
+    try:
+        uri = x['artists'][0]['href']
+        artist = x['artists'][0]['name']
+        albums = getAlbumsForArtist(uri)
+        uris = {
+            'uri': uri,
+            'artist': artist,
+            'album': albums
+        }
+        return uris
+    except:
+        return {}
+
+
+def getAlbumsForArtist(spURI):
+    global lookup_uri
+    r = requests.get(lookup_uri + 'uri=' + spURI + '&extras=album')
+    while (r.text == ''):
+        time.sleep(0.1)
+    x = json.loads(r.text)
+    artist_albums = {}
+    artist_albums['name'] = x['artist']['name']
+    artist_albums['uri'] = x['artist']['href']
+    artist_albums['albums'] = []
+    # print x
+    for alb in x['artist']['albums']:
+        a = alb['album']
+        if a['artist'] == artist_albums['name']:
             try:
-                if i['album']['availability']['territories'].find('US') != -1:
-                    albums[i['album']['name']] = i['album']['href']
+                if a['availability']['territories'].find('US') != -1:
+                    t = getTracksForAlbum(a['href'])
+                    artist_albums['albums'].append(t)
             except KeyError:
                 pass
-    albumInfo = []
-    for key, value in albums.iteritems():
-        albumInfo.append(getTracks(value))
-    return albumInfo
+    return artist_albums
+    # albumInfo = []
+    # for key, value in albums.iteritems():
+    #     albumInfo.append(getTracksForAlbum(value))
+    # return albumInfo
 
 
-def getTracks(spURI):
+def getTracksForAlbum(spURI):
     """
         Look up album uri
-        create album object and append trackinfo array
+        create album object and append track array
         get track information for each track and append to array
         album: released, name, href
-        each track: track-number, name, available, href, length
+        each track: track-number, name, href, length
     """
-    global root
+    global lookup_uri
 
-    r = requests.get(root + 'uri=' + spURI + '&extras=trackdetail')
+    r = requests.get(lookup_uri + 'uri=' + spURI + '&extras=trackdetail')
     while (r.text == ''):
         time.sleep(0.1)
     x = json.loads(r.text)
@@ -498,12 +534,22 @@ def getTracks(spURI):
     album['name'] = y['name']
     album['href'] = y['href']
     album['artist'] = y['artist']
-    tracks = []
+    album['tracks'] = []
+    # print x
     for t in y['tracks']:
-        tracks.append([t['track-number'],
-                       t['name'],
-                       t['available'],
-                       t['href'],
-                       t['length']])
-    album['tracks'] = tracks
+        l = t['length']
+        minute = str(int(round(l / 60)))
+        sec = ''
+        if l % 60 < 10:
+            sec = '0' + str(int(round(l % 60)))
+        else:
+            sec = str(int(round(l % 60)))
+        dur = minute + ':' + sec
+
+        album['tracks'].append({
+                               'tracknumber': t['track-number'],
+                               'name': t['name'],
+                               'href': t['href'],
+                               'length': dur
+                               })
     return album

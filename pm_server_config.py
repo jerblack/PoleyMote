@@ -18,15 +18,23 @@ def readConfig():
     log('readConfig',
         "Reading 'pm_settings.ini' into pconfig object")
     # try:
-    #    f = open("pm_settings.ini")
-    #    pconfig = eval(f.read())
-    #    f.close()
-    #    return pconfig
+    #     f = open("pm_settings.ini")
+    #     pconfig = eval(f.read())
+    #     f.close()
+    #     return pconfig
     # except IOError:
-    log('readConfig',
-        "'pm_settings.ini' not found; calling resetDefaultConfig")
+    #     log('readConfig',
+    #         "'pm_settings.ini' not found; calling resetDefaultConfig")
 
     return resetDefaultConfig()
+
+
+def updateConfig(new_config):
+    global pconfig
+    f = open("pm_settings.ini", "w")
+    f.write(str(new_config))
+    f.close()
+    pconfig = new_config
 
 
 def resetDefaultConfig():
@@ -39,7 +47,6 @@ def resetDefaultConfig():
         "Local": {
             "Use_iTunes": True,
             "Index_Local_Music": True,
-            "Music_Locations": [""]
         },
         "AirFoil": {
             "Use_Airfoil": True,
@@ -48,8 +55,6 @@ def resetDefaultConfig():
         "Playlists": {
             "Favorite_Playlists":
             [
-                # favorites each get a button under 'play a new playlist'
-                # in remote and dash
                 {
                     "Name": "Electronic/Dance",
                     "uri":
@@ -91,14 +96,19 @@ def resetDefaultConfig():
                     "uri":
                     "spotify:user:jerblack:playlist:3HESEQC2UvmA1Ap1q4Q2m1"
                 }, {
+                    "Name": "Spotify Library 4",
+                    "uri":
+                    "spotify:user:jerblack:playlist:6MmxBfR7jiX4f9cSi5O2PW"
+                }, {
                     "Name": "iTunes Music",
                     "uri":
                     "spotify:user:jerblack:playlist:1CgDrOOVdpF34v9QaRvxkq"
                 }
             ],
             "Shuffle_Playlist_Size": 25,
-            # drop-down should have increments of 50
-            "Automatically_add_music_to_queue_when_nearing_end": True
+            "Automatically_add_music_to_queue_when_nearing_end": True,
+            "Spl_base_name": 'Shuffle Playlist',
+            "Spl_folder": 'Shuffle Playlists'
                     },
         "Bookmarks": {
             "Support_Multiple_Users": True,

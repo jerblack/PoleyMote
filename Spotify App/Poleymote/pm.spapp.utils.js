@@ -9,6 +9,7 @@ remove = {
     later: {},
     queue: {}
 }
+add = {}
 star = {};
 
 var worker;
@@ -25,13 +26,13 @@ utils.startWorker = function() {
                 case 'log':
                     log(rsp.title, rsp.text);
                     break;
-                case 'shuffle':
-                    if (rsp.caller == 'playshuffle'){
-                        controls.play.shuffle3.finish(rsp.data);
-                    } else if (rsp.caller === 'appendshuffle'){
-                        controls.appendToQueue(rsp.data);
-                    }
-                    break;
+                // case 'shuffle':
+                //     if (rsp.caller == 'playshuffle'){
+                //         controls.play.shuffle3.finish(rsp.data);
+                //     } else if (rsp.caller === 'appendshuffle'){
+                //         controls.appendToQueue(rsp.data);
+                //     }
+                //     break;
                 default:
                     console.log(e.data);
                 };
@@ -100,27 +101,183 @@ utils.onSettingsLoad = function() {
     utils.getPlaylists();
 }
 
+utils.updateSettings = function(new_config) {
+    console.log('update settings')
+    console.log(new_config);
+    $.post("http://" + serverIP + "/cmd/updatesettings", new_config, function () {
+            utils.getSettings();
+    })
+}
+
 
 var spls = [];
 var fpls = [];
 utils.getPlaylists = function () {
     spls = [];
     fpls = [];
+    spls.push(models.library.starredPlaylist);
     config.Playlists.Shuffle_Playlists.forEach(function(spl){
         models.Playlist.fromURI(spl.uri, function(p){
             if (spls.indexOf(p) == -1) {
                 spls.push(p);
-            }
-        })
-    })
+            }})})
     config.Playlists.Favorite_Playlists.forEach(function(fpl){
         models.Playlist.fromURI(fpl.uri, function(p){
             if (fpls.indexOf(p) == -1) {
                 fpls.push(p);
-            }
-        })
+            }})})};
+
+
+utils.getPlaylistUri = function (name) {
+    console.log(name);
+    var allPls = sp.core.library.getPlaylistsUri();
+    var uri;
+    allPls.forEach(function(p){
+        if (p.name == name) {
+            uri = p.uri;
+        }
     })
-};
+    return uri;
+}
+
+
+utils.getHighestSpl = function () {
+    var pl_base_name = config.Playlists.Spl_base_name;
+    var highest_spl = 0;
+    var shuffles = [];
+    var allPls = sp.core.library.getPlaylistsUri();
+    allPls.forEach(function(p){
+        if (p.name != undefined && p.name.search(pl_base_name) != -1 && p.type == 'playlist') {
+            shuffles.push(p.name);
+        }})
+    shuffles.forEach(function(s){
+        idx = s.replace(pl_base_name, '').trim();
+        idx = parseInt(idx)
+        if (idx > highest_spl) {
+            highest_spl = idx;
+            }})
+    return highest_spl;
+}
+
+utils.createSplFolder = function () {
+    var folder = config.Playlists.Spl_folder;
+    var allPls = sp.core.library.getPlaylistsUri();
+    var found = false;
+    allPls.forEach(function(p){
+        if (p.name != undefined && p.name.search(folder) != -1 && p.type == 'start-group') {
+                found = true;
+            }})
+    if (!found) {
+        sp.core.library.createPlaylistGroup(folder);
+    }
+    return 0;
+}
+
+utils.moveSplToFolder = function (playlist) {
+    utils.createSplFolder();
+    var folder = config.Playlists.Spl_folder;
+    var allPls = sp.core.library.getPlaylistsUri();
+    var folder_indexes = [];
+    var folder_begin = -1;
+    var folder_end = -1;
+    var pl_index = -1;
+    allPls.forEach(function(p){
+        if (p.name == folder) {
+            folder_begin = allPls.indexOf(p)
+        }
+        if (p.type == 'end-group') {
+            folder_indexes.push(allPls.indexOf(p));
+        }
+        if (p.name != undefined && p.name.search(playlist) != -1 && p.type == 'playlist') {
+            pl_index = allPls.indexOf(p);
+        }
+    })
+    folder_indexes.forEach(function(f){
+        if (f >= folder_begin && folder_end == -1) {
+            folder_end = f;
+        }})
+
+    sp.core.library.movePlaylist(pl_index, folder_end);
+    return;
+}
+
+add.newShufflePlaylist = function () {
+    var pl_base_name = config.Playlists.Spl_base_name;
+    var idx = utils.getHighestSpl() + 1;
+    var newName = pl_base_name + ' ' + idx;
+    var pl = new models.Playlist(newName);
+    utils.moveSplToFolder(newName);
+    var new_pl = {
+        Name: newName,
+        uri: utils.getPlaylistUri(newName)
+    }
+    var new_config = config;
+    new_config.Playlists.Shuffle_Playlists.push(new_pl)
+    utils.updateSettings(new_config);
+    return  new_pl.uri;
+
+    }
+
+add.addTracks = function (tracks) {
+    var pls = [];
+    var counts =  [];
+    var idx;
+    var maxPlSize = 9999;
+    var highcount = 0;
+    var highindex = -1;
+
+    spls.forEach(function(p){
+        if (p.name.search('Shuffle Playlist') != -1) {
+            pls.push(p);
+        }})
+
+    pls.forEach(function(p){
+        counts.push(p.length);
+    })
+
+
+    counts.forEach(function(c){
+        var avail = maxPlSize - c;
+        if (avail >= tracks.length && avail > highcount){
+            highcount = avail;
+            highindex = counts.indexOf(c);
+        }
+    })
+    if (highindex != -1) {
+        tracks.forEach(function(t){
+            pls[highindex].add(t);
+        })
+        log('Adding tracks', 'Added ' + tracks.length + ' tracks to your shuffle playlists')
+    } else {
+        log('Adding tracks', ['No shuffle playlist was found','with sufficient space for your new tracks','I will create another shuffle playlist', 'and try again'])
+        var uri = add.newShufflePlaylist();
+        add.addTracks(tracks);
+    }
+}
+
+add.getAllTracks = function (albumURI) {
+    log('Adding Tracks', 'Adding tracks from this album');
+    $.getJSON("http://" + serverIP + "/cmd/getalltracks/" + albumURI, function (data) {
+        tracks = []
+        data.tracks.forEach(function(t){
+            tracks.push(t.href);
+        })
+        add.addTracks(tracks);
+        
+    }) 
+}
+
+add.getAllAlbums = function (artistURI) {
+    log('Adding Tracks', 'Adding albums from this artist');
+    $.getJSON("http://" + serverIP + "/cmd/getallalbums/" + artistURI, function (data) {
+        tracks = [];
+        data.albums.forEach(function(a){
+            a.tracks.forEach(function(t){
+                tracks.push(t.href);
+            })
+        })
+        add.addTracks(tracks);
+    });}
 
 
 dedupe.find = function () {

@@ -10,26 +10,6 @@ onmessage = function(e){
     // self.close()
 };
  
-
-
-// function shuffle(input) {
-//     numpl = input.num_playlists;
-//     counts = input.playlist_counts;
-//     chunks = input.chunks
-//     tracks = []
-//     caller = input.caller
-//     for (var i = 0; i < chunks; i++){
-//         pl = Math.floor(Math.random() * numpl),
-//         track = Math.floor(Math.random() * counts[pl])
-//         tracks.push({pl: pl, track: track, caller: caller});
-//     }
-//     postMessage({fn: 'shuffle', data: tracks});
-
-// }
-
-
-
-
 function ddw(input) {
     td = input.shift();
     work = td.tracks;
@@ -60,3 +40,5 @@ function ddw(input) {
              text: 'No duplicates found in your shuffle playlists'});
     }
 }
+
+

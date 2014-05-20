@@ -101,6 +101,7 @@ def indexItunesLibrary():
     conn.close()
 
 
+
 def parseSPurl(spURL):
     if 'spotify:local:' in spURL:
         m = spURL.replace('spotify:local:', '')

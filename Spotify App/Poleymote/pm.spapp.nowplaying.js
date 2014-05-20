@@ -7,7 +7,7 @@ nowplaying.log = function (includePL, shuffle) {
             log('Track Changed', ['Song: ' + t.name.decodeForText(),
                 'Artist: ' + t.artists[0].name.decodeForText(),
                 'Album: ' + t.album.name.decodeForText(),
-                'Playlist: ' + models.Playlist.fromURI(queuePLs[queue.indexOf(t)]).name]);
+                'Playlist: ' + spls[qPLs[q.indexOf(t)]].name]);
         } else {
             if (player.context.search(':starred') == -1 ) {
                 log('Track Changed', ['Song: ' + t.name.decodeForText(),
@@ -28,9 +28,7 @@ nowplaying.log = function (includePL, shuffle) {
 nowplaying.dashboard = function () {
     var track = player.track;
 
-    if (track == null) {
-        $("#now-playing").html("How boring! :(");
-    } else {
+    if (track != null) {
         $("#now-playing").empty();
         $("#years").empty();
         $("#bio").empty();
@@ -85,8 +83,8 @@ nowplaying.sendUpdate = function () {
         if (player.context.search(":starred") != -1) {
                 pl = 'Starred';
         } else if (player.context.search("internal:temp_playlist") != -1) {
-            if (queuePLs.length > 0) {
-                pl = models.Playlist.fromURI(queuePLs[queue.indexOf(player.track)]).name;
+            if (qPLs.length > 0) {
+                pl = spls[qPLs[q.indexOf(player.track)]].name;
             } else {
                 pl = '';}
         } else {
