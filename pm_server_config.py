@@ -1,6 +1,7 @@
 # -*- coding: utf_8 -*-
 # !/usr/bin/env python
 from pm_server_logging import log
+import pprint as pp
 
 # ----------------------------------------- #
 local_delete_folder = 'Z:/iTunes/Deleted/'
@@ -169,7 +170,7 @@ def resetDefaultConfig():
             }
         }
     f = open("pm_settings.ini", "w")
-    f.write(str(defaults))
+    pp.pprint(defaults, f)
     f.close()
     pconfig = defaults
     return pconfig

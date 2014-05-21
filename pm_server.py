@@ -195,6 +195,10 @@ def handleCMD(cmd, opt):
         log("handleCMD", "'/cmd/getalltracks' -> " + opt)
         return json.dumps(getTracksForAlbum(opt))
 
+    elif (cmd == "gettrackslocal"):
+        log("handleCMD", "'/cmd/getalltracks' -> " + opt)
+        return json.dumps(getSpURIsForLocal(opt))
+
 
 # spotify:local:Butterfly+Bones:BIRP%21+March+2010:%3c3:228
 def archive(opt):
@@ -467,24 +471,35 @@ search_uri = 'http://ws.spotify.com/search/1/artist.json?q='
 pho = 'spotify:artist:1xU878Z1QtBldR7ru9owdU'
 
 
-def getSpURIs(local_uri):
+def getSpURIsForLocal(local_uri):
     track = local.parseSPurl(local_uri)
-    r = requests.get(search_uri + track[0])
+    name = track[2].lower()
+    artist = track[0].lower()
+    r = requests.get(search_uri + artist)
     while (r.text == ''):
         time.sleep(0.1)
     x = json.loads(r.text)
-    try:
-        uri = x['artists'][0]['href']
-        artist = x['artists'][0]['name']
-        albums = getAlbumsForArtist(uri)
-        uris = {
-            'uri': uri,
-            'artist': artist,
-            'album': albums
-        }
-        return uris
-    except:
-        return {}
+    found_in_album = []
+    for a in x['artists']:
+        # try:
+        if artist == a['name'].lower():
+            uri = a['href']
+            artist_info = getAlbumsForArtist(uri)
+            albums = artist_info['albums']
+            for a in albums:
+                found = 0
+                for t in a['tracks']:
+                    if (found == 0):
+                        if (name == t['name'].lower()):
+                            found_in_album.append(a['href'])
+                            found = 1
+            artist_info['found_in_album'] = found_in_album
+            artist_info['source_name'] = name
+            artist_info['source_uri'] = local_uri
+            return artist_info
+    #     except:
+    #         pass
+    return {}
 
 
 def getAlbumsForArtist(spURI):

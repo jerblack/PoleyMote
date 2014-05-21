@@ -14,12 +14,12 @@ var serverIP = "192.168.0.50";
 
 var q = new Array();
 var qPLs = new Array();
+var lastTrack;
 
 
 $(function () { // Starts when app loads
     log('Welcome', 'PoleyMote Spotify app is now loaded.');
     var args = models.application.arguments
-    var lastTrack;
 
     doRemote();
     utils.getSettings();
@@ -48,6 +48,12 @@ $(function () { // Starts when app loads
 			}
             nowplaying.dashboard()
             controls.appendToQueue();
+            if (lastTrack != undefined && lastTrack.search('spotify:local:') != -1) {
+                utils.migrateLocalTrackToSp(lastTrack);
+            }
+            setTimeout(function(){
+                lastTrack = player.track.uri;
+            }, 1000);
             // getPlayQueue();
         }
         remove.later.process();
