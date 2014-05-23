@@ -187,16 +187,16 @@ def handleCMD(cmd, opt):
             "track archived")
         archive(opt)
 
-    elif (cmd == "getallalbums"):
-        log("handleCMD", "'/cmd/getallalbums' -> " + opt)
-        return json.dumps(getAlbumsForArtist(opt))
+    elif (cmd == "gettracksforartist"):
+        log("handleCMD", "'/cmd/gettracksforartist' -> " + opt)
+        return json.dumps(getTracksForArtist(opt))
 
-    elif (cmd == "getalltracks"):
-        log("handleCMD", "'/cmd/getalltracks' -> " + opt)
+    elif (cmd == "gettracksforalbum"):
+        log("handleCMD", "'/cmd/gettracksforalbum' -> " + opt)
         return json.dumps(getTracksForAlbum(opt))
 
-    elif (cmd == "gettrackslocal"):
-        log("handleCMD", "'/cmd/getalltracks' -> " + opt)
+    elif (cmd == "gettracksforlocal"):
+        log("handleCMD", "'/cmd/gettracksforlocal' -> " + opt)
         return json.dumps(getSpURIsForLocal(opt))
 
 
@@ -484,7 +484,7 @@ def getSpURIsForLocal(local_uri):
         # try:
         if artist == a['name'].lower():
             uri = a['href']
-            artist_info = getAlbumsForArtist(uri)
+            artist_info = getTracksForArtist(uri)
             albums = artist_info['albums']
             for a in albums:
                 found = 0
@@ -502,7 +502,7 @@ def getSpURIsForLocal(local_uri):
     return {}
 
 
-def getAlbumsForArtist(spURI):
+def getTracksForArtist(spURI):
     global lookup_uri
     r = requests.get(lookup_uri + 'uri=' + spURI + '&extras=album')
     while (r.text == ''):
@@ -511,6 +511,7 @@ def getAlbumsForArtist(spURI):
     artist_albums = {}
     artist_albums['name'] = x['artist']['name']
     artist_albums['uri'] = x['artist']['href']
+    artist_albums['source_uri'] = spURI
     artist_albums['albums'] = []
     # print x
     for alb in x['artist']['albums']:
@@ -549,6 +550,8 @@ def getTracksForAlbum(spURI):
     album['name'] = y['name']
     album['href'] = y['href']
     album['artist'] = y['artist']
+    album['source_uri'] = spURI
+
     album['tracks'] = []
     # print x
     for t in y['tracks']:

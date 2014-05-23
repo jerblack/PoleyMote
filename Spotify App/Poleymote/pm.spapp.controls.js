@@ -79,7 +79,7 @@ controls.appendToQueue = function () {
     if (config.Playlists.Automatically_add_music_to_queue_when_nearing_end) {
         if (player.context === q.uri) {
             // if (q.length - (q.indexOf(player.track)) < 5 && q.length - (q.indexOf(player.track)) > 2) {
-            if (q.length - (q.indexOf(player.track)) < 5) {
+            if (q.length - (q.indexOf(player.track)) > 2 && q.length - (q.indexOf(player.track)) < 5) {
 
                 try {
                     var spl_size = config.Playlists.Shuffle_Playlist_Size;
@@ -91,55 +91,12 @@ controls.appendToQueue = function () {
                         };
                     log('Now Playing', ["Shuffle queue almost empty", "Now refilling with " + spl_size + " new tracks."]);
                 } catch (err) {
-                    utils.getSettings();
+                    utils.settings.get();
                 }
             }
         }
     }
 }
-
-
-controls.archiveTrack = function () {
-    var tName = player.track.toString().decodeForText();
-    var tArtist = player.track.artists[0].name.decodeForText();
-    var tAlbum = player.track.album.name.decodeForText();
-    var tUri = player.track.uri;
-    var track = player.track;
-    var a = config.Archive;
-    var pl = [];
-    var plResultsArray = []
-
-    if (a.Archive_from_all_shuffle_playlists) {
-        pl = pl.concat(spls);
-        }
-
-    if (a.Archive_from_all_favorite_playlists) {
-        pl = pl.concat(fpls);
-        }
-
-    log('Archive', 'Archiving track ' + tName);
-    pl.forEach(function (pl) {
-        if (pl.indexOf(tUri) != -1) {
-            plResultsArray.push( {'name': pl.name,
-                                  'uri': pl.uri} );
-            while (pl.indexOf(track) != -1){
-                pl.remove(t.uri);
-            }
-        }
-    })
-    var archiveData = {
-        "name": tName,
-        "artist": tArtist,
-        "album": tAlbum,
-        "trackURI": tUri,
-        "plURIs": JSON.stringify(plResultsArray)
-    };
-    $.post("http://" + serverIP + "/cmd/archive", archiveData);
-    controls.next();
-
-}
-
-
 
 // controls.play.shuffle3 = function() {
 //     console.log('started at ' + utils.displayTime());

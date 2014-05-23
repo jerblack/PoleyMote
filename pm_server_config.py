@@ -67,15 +67,15 @@ def resetDefaultConfig():
                 }, {
                     "Name": "24 Hours - The Starck Mix",
                     "uri":
-                    "spotify:user:jerblack:playlist:2mULB2e4ksogUFS6yGOCOG"
+                    "spotify:user:jerblack:playlist:79fGXwhYJgTvkcrRcWtX6W"
                 }, {
                     "Name": "iTunes Music",
                     "uri":
-                    "spotify:user:jerblack:playlist:2q8vKcBUGHl0hR5TffHIlE"
+                    "spotify:user:jerblack:playlist:7gLGqRlHQVQY2Xc6tx5PRk"
                 }, {
                     "Name": "Classical",
                     "uri":
-                    "spotify:user:jerblack:playlist:69NMPqX81LVyXX1py5QnOi"
+                    "spotify:user:jerblack:playlist:6ZP2hIKdPv8k1uSQOBtoEw"
                 }
             ],
             "Shuffle_Playlists":
@@ -103,10 +103,10 @@ def resetDefaultConfig():
                 }, {
                     "Name": "iTunes Music",
                     "uri":
-                    "spotify:user:jerblack:playlist:1CgDrOOVdpF34v9QaRvxkq"
+                    "spotify:user:jerblack:playlist:7gLGqRlHQVQY2Xc6tx5PRk"
                 }
             ],
-            "Shuffle_Playlist_Size": 25,
+            "Shuffle_Playlist_Size": 250,
             "Automatically_add_music_to_queue_when_nearing_end": True,
             "Spl_base_name": 'Shuffle Playlist',
             "Spl_folder": 'Shuffle Playlists'

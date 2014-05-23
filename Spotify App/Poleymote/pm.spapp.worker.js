@@ -3,14 +3,14 @@ onmessage = function(e){
     // Looking for e.data.fn, e.data.data
 
     if (e.data.fn === 'dedupe') {
-        ddw(e.data.data);
+        dedupe(e.data.data);
     } else if (e.data.fn === 'shuffle') {
         shuffle(e.data.data);
     }
     // self.close()
 };
  
-function ddw(input) {
+function dedupe(input) {
     td = input.shift();
     work = td.tracks;
     dlt = [];

@@ -1,20 +1,33 @@
 utils = {
-    sonos:{}
+    sonos:      {},
+    worker:     {},
+    migrate:    {},
+    settings:   {},
+    playlist:   {
+        shuffle: {}
+    }
 }
 dedupe = {};
 remove = {
-    track: {},
+    track:  {},
     artist: {},
-    album: {},
-    later: {},
-    queue: {}
-}
-add = {}
-star = {};
+    album:  {},
+    later:  {},
+    queue:  {}
+         };
+add =       {
+    tracks: {}
+};
+star =      {};
+archive =   {
+    track:      {},
+    artist:     {},
+    album:      {}
+            };
 
 var worker;
 
-utils.startWorker = function() {
+utils.worker.start = function() {
     worker = new Worker('pm.spapp.worker.js'); 
     worker.onmessage = function(e){
             // console.log(e.data)
@@ -26,22 +39,15 @@ utils.startWorker = function() {
                 case 'log':
                     log(rsp.title, rsp.text);
                     break;
-                // case 'shuffle':
-                //     if (rsp.caller == 'playshuffle'){
-                //         controls.play.shuffle3.finish(rsp.data);
-                //     } else if (rsp.caller === 'appendshuffle'){
-                //         controls.appendToQueue(rsp.data);
-                //     }
-                //     break;
                 default:
                     console.log(e.data);
                 };
             }
         }
 
-utils.doInWorker = function (f,d) {
+utils.worker.do = function (f,d) {
     if (worker.toString() != '[object Worker]') {
-        utils.startWorker;
+        utils.worker.start();
     }
     worker.postMessage({fn: f, data: d});
     console.log('"' + f + '" passed into web worker');
@@ -64,11 +70,48 @@ utils.displayTime = function () {
     if (minutes < 10) {minutes = "0" + minutes}
     if (seconds < 10) {seconds = "0" + seconds}
     str += hours + ":" + minutes + ":" + seconds + " ";
-    if(hours > 11){str += "PM"} else {str += "AM"}
+    if (hours > 11){str += "PM"} else {str += "AM"}
     return str;
 }
 
-utils.buildOfflinePlaylist = function () {
+var config;
+
+utils.settings.get = function () {
+    $.getJSON("http://" + serverIP + "/cmd/getsettings", function (data) {
+        config = data;
+        utils.settings.onLoad();
+    })}
+
+utils.settings.onLoad = function() {
+    dashboard.playlistButtons();
+    utils.playlist.init();
+}
+
+utils.settings.update = function(new_config) {
+    console.log('update settings')
+    console.log(new_config);
+    $.post("http://" + serverIP + "/cmd/updatesettings", new_config, function () {
+            utils.settings.get();
+    })}
+
+var spls = [], fpls = [];
+
+utils.playlist.init = function () {
+    spls = [];
+    fpls = [];
+    spls.push(models.library.starredPlaylist);
+    config.Playlists.Shuffle_Playlists.forEach(function(spl){
+        models.Playlist.fromURI(spl.uri, function(p){
+            if (spls.indexOf(p) == -1) {
+                spls.push(p);
+            }})})
+    config.Playlists.Favorite_Playlists.forEach(function(fpl){
+        models.Playlist.fromURI(fpl.uri, function(p){
+            if (fpls.indexOf(p) == -1) {
+                fpls.push(p);
+            }})})};
+
+utils.playlist.makeOffline = function () {
     var playlist_size = 250;
     var shufflePLURIs = config.Playlists.Shuffle_Playlists;
     var chunk = Math.ceil(playlist_size / shufflePLURIs.length);
@@ -87,48 +130,8 @@ utils.buildOfflinePlaylist = function () {
     log('Offline Playlist', ["Offline playlist has been populated", chunk + " tracks from each of the shuffle playlists have been added"]);
 }
 
-var config;
 
-utils.getSettings = function () {
-    $.getJSON("http://" + serverIP + "/cmd/getsettings", function (data) {
-        config = data;
-        utils.onSettingsLoad();
-    })
-}
-
-utils.onSettingsLoad = function() {
-    dashboard.playlistButtons();
-    utils.getPlaylists();
-}
-
-utils.updateSettings = function(new_config) {
-    console.log('update settings')
-    console.log(new_config);
-    $.post("http://" + serverIP + "/cmd/updatesettings", new_config, function () {
-            utils.getSettings();
-    })
-}
-
-
-var spls = [];
-var fpls = [];
-utils.getPlaylists = function () {
-    spls = [];
-    fpls = [];
-    spls.push(models.library.starredPlaylist);
-    config.Playlists.Shuffle_Playlists.forEach(function(spl){
-        models.Playlist.fromURI(spl.uri, function(p){
-            if (spls.indexOf(p) == -1) {
-                spls.push(p);
-            }})})
-    config.Playlists.Favorite_Playlists.forEach(function(fpl){
-        models.Playlist.fromURI(fpl.uri, function(p){
-            if (fpls.indexOf(p) == -1) {
-                fpls.push(p);
-            }})})};
-
-
-utils.getPlaylistUri = function (name) {
+utils.playlist.getURI = function (name) {
     console.log(name);
     var allPls = sp.core.library.getPlaylistsUri();
     var uri;
@@ -141,14 +144,16 @@ utils.getPlaylistUri = function (name) {
 }
 
 
-utils.getHighestSpl = function () {
+utils.playlist.shuffle.getHighest = function () {
     var pl_base_name = config.Playlists.Spl_base_name;
     var highest_spl = 0;
     var shuffles = [];
     var allPls = sp.core.library.getPlaylistsUri();
     allPls.forEach(function(p){
-        if (p.name != undefined && p.name.search(pl_base_name) != -1 && p.type == 'playlist') {
-            shuffles.push(p.name);
+        if (p.name != undefined &&
+            p.name.search(pl_base_name) != -1 &&
+            p.type == 'playlist') {
+                shuffles.push(p.name);
         }})
     shuffles.forEach(function(s){
         idx = s.replace(pl_base_name, '').trim();
@@ -159,12 +164,14 @@ utils.getHighestSpl = function () {
     return highest_spl;
 }
 
-utils.createSplFolder = function () {
+utils.playlist.shuffle.createFolder = function () {
     var folder = config.Playlists.Spl_folder;
     var allPls = sp.core.library.getPlaylistsUri();
     var found = false;
     allPls.forEach(function(p){
-        if (p.name != undefined && p.name.search(folder) != -1 && p.type == 'start-group') {
+        if (p.name != undefined && 
+            p.name.search(folder) != -1 && 
+            p.type == 'start-group') {
                 found = true;
             }})
     if (!found) {
@@ -173,8 +180,8 @@ utils.createSplFolder = function () {
     return 0;
 }
 
-utils.moveSplToFolder = function (playlist) {
-    utils.createSplFolder();
+utils.playlist.shuffle.moveSplToFolder = function (playlist) {
+    utils.playlist.shuffle.createFolder();
     var folder = config.Playlists.Spl_folder;
     var allPls = sp.core.library.getPlaylistsUri();
     var folder_indexes = [];
@@ -188,42 +195,71 @@ utils.moveSplToFolder = function (playlist) {
         if (p.type == 'end-group') {
             folder_indexes.push(allPls.indexOf(p));
         }
-        if (p.name != undefined && p.name.search(playlist) != -1 && p.type == 'playlist') {
-            pl_index = allPls.indexOf(p);
+        if (p.name != undefined && 
+            p.name.search(playlist) != -1 && 
+            p.type == 'playlist') {
+                pl_index = allPls.indexOf(p);
         }
     })
     folder_indexes.forEach(function(f){
-        if (f >= folder_begin && folder_end == -1) {
-            folder_end = f;
+        if (f >= folder_begin && 
+            folder_end == -1) {
+                folder_end = f;
         }})
 
     sp.core.library.movePlaylist(pl_index, folder_end);
     return;
 }
 
-utils.migrate = function () {
-    if (lastTrack != undefined && lastTrack.search('spotify:local:') != -1) {
-        utils.migrateLocalTrackToSp(lastTrack);
+utils.playlist.shuffle.newSpl = function () {
+    var pl_base_name = config.Playlists.Spl_base_name;
+    var idx = utils.playlist.shuffle.getHighest() + 1;
+    var newName = pl_base_name + ' ' + idx;
+    var pl = new models.Playlist(newName);
+    utils.playlist.shuffle.moveSplToFolder(newName);
+    var new_pl = {
+        Name: newName,
+        uri: utils.playlist.getURI(newName)
+    }
+    var new_config = config;
+    new_config.Playlists.Shuffle_Playlists.push(new_pl)
+    utils.settings.update(new_config);
+    return  new_pl.uri;
+
+    }
+
+utils.migrate.whenDone = function () {
+    if (lastTrack != undefined && 
+        lastTrack.search('spotify:local:') != -1) {
+            utils.migrate.fromURI(lastTrack);
     }
     setTimeout(function(){
         lastTrack = player.track.uri;
     }, 1000);
-    remove.later.cancel
 }
 
-utils.migrateLocalTrackToSp = function (localURI) {
-    $.getJSON("http://" + serverIP + "/cmd/gettrackslocal/" + localURI, function (data) {
+utils.migrate.fromURI = function (localURI) {
+    $.getJSON("http://" + serverIP + "/cmd/gettracksforlocal/" + localURI, function (data) {
         var found = false;
         if (data.albums != undefined){
             data.albums.forEach(function(a){
                 if (a.tracks != undefined) {
                     a.tracks.forEach(function(t){
-                    if (t.name.toLowerCase() == data.source_name && found == false) {
-                        found = true;
-                        add.addTracks([t.href]);
-                        remove.queue.add(localURI);
-                        log('Migrate Track', ['A spotify version of this track was found and added to your shuffle playlists',
-                                              'The local copy will be removed when it is finished playing']);
+                    if (t.name.toLowerCase() == data.source_name && 
+                        found == false) {
+                            models.Track.fromURI(t, function (t) {
+                                if (t.starred) {
+                                    star.fromURI(t.href);
+                                }
+                                found = true;
+                                add.addTracks([t.href]);
+                                remove.queue.add(localURI);
+
+                                log('Migrate Track', [localURI, 
+                                                  'A spotify version of this track was found and added to your shuffle playlists',
+                                                  'The local copy will be removed when it is finished playing']);
+                            })
+
                         }
                     })
                 }  
@@ -234,22 +270,9 @@ utils.migrateLocalTrackToSp = function (localURI) {
     })
 }
 
-add.newShufflePlaylist = function () {
-    var pl_base_name = config.Playlists.Spl_base_name;
-    var idx = utils.getHighestSpl() + 1;
-    var newName = pl_base_name + ' ' + idx;
-    var pl = new models.Playlist(newName);
-    utils.moveSplToFolder(newName);
-    var new_pl = {
-        Name: newName,
-        uri: utils.getPlaylistUri(newName)
-    }
-    var new_config = config;
-    new_config.Playlists.Shuffle_Playlists.push(new_pl)
-    utils.updateSettings(new_config);
-    return  new_pl.uri;
 
-    }
+
+
 
 add.addTracks = function (tracks) {
     var pls = [];
@@ -271,19 +294,25 @@ add.addTracks = function (tracks) {
 
     counts.forEach(function(c){
         var avail = maxPlSize - c;
-        if (avail >= tracks.length && avail > highcount){
-            highcount = avail;
-            highindex = counts.indexOf(c);
+        if (avail >= tracks.length && 
+            avail > highcount){
+                highcount = avail;
+                highindex = counts.indexOf(c);
         }
     })
     if (highindex != -1) {
         tracks.forEach(function(t){
             pls[highindex].add(t);
         })
-        log('Adding tracks', 'Added ' + tracks.length + ' tracks to ' + pls[highindex].data.name)
+        log('Adding tracks', 'Added ' + 
+                             tracks.length + 
+                             ' tracks to ' + 
+                             pls[highindex].data.name)
     } else {
-        log('Adding tracks', ['No shuffle playlist was found','with sufficient space for your new tracks','Creating another shuffle playlist and trying again'])
-        var uri = add.newShufflePlaylist();
+        log('Adding tracks', ['No shuffle playlist was found',
+                              'with sufficient space for your new tracks',
+                              'Creating another shuffle playlist and trying again'])
+        var uri = utils.playlist.shuffle.newSpl();
         add.addTracks(tracks);
     }
 }
@@ -336,7 +365,7 @@ add.AlbumsFromArtist = function (artistURI) {
 
 add.TracksFromAlbum.fromLocal = function (localURI) {
     log('Adding Tracks', 'Adding all spotify tracks from albums with local track');
-    $.getJSON("http://" + serverIP + "/cmd/gettrackslocal/" + localURI, function (data) {
+    $.getJSON("http://" + serverIP + "/cmd/gettracksforlocal/" + localURI, function (data) {
         tracks = [];
         if (data.albums != undefined){
             data.albums.forEach(function(a){
@@ -360,27 +389,27 @@ add.TracksFromAlbum.fromLocal = function (localURI) {
 }
 
 add.AlbumsFromArtist.fromLocal = function (localURI) {
-    log('Adding Tracks', 'Adding all tracks from artist for local track');
-    $.getJSON("http://" + serverIP + "/cmd/gettrackslocal/" + localURI, function (data) {
+    $.getJSON("http://" + serverIP + "/cmd/gettracksforlocal/" + localURI, function (data) {
+        log('Adding Artist', "Adding all tracks for artist '" + data.name + '"');
         tracks = [];
         if (data.albums != undefined){
             data.albums.forEach(function(a){
-            a.tracks.forEach(function(t){
-                tracks.push(t.href);
-                })
+                a.tracks.forEach(function(t){
+                    tracks.push(t.href);
+                    })
             })
         add.addTracks(tracks);
         } else {
-            log('Adding Tracks', 'Artist for local track was not found on Spotify');
+            log('Adding Artist', 'Artist for local track was not found on Spotify');
         }
     })
 }
 
 
-
-
 dedupe.find = function () {
-    log('Duplicate Remover', ['Starting search for duplicate tracks', 'Checking for duplicates across all Shuffle playlists', 'Starting at '+ utils.displayTime()]);
+    log('Duplicate Remover', ['Starting search for duplicate tracks',
+                              'Checking for duplicates across all Shuffle playlists',
+                              'Starting at ' + utils.displayTime()]);
     tracks = [];
     $.getJSON("http://" + serverIP + "/cmd/getthumbsdown", function (data) {
         var pl = {}; 
@@ -399,7 +428,7 @@ dedupe.find = function () {
             });
             tracks.push(pl);
         });
-        utils.doInWorker('dedupe', tracks);
+        utils.worker.do('dedupe', tracks);
     });
 }
 
@@ -413,7 +442,167 @@ dedupe.delete = function (dupes) {
             })
         })
     })
-    log('Duplicate Remover',['Removed ' + count + ' duplicate tracks from your shuffle playlists','Finished at '+ utils.displayTime()]);
+    log('Duplicate Remover',['Removed ' + count + ' duplicate tracks from your shuffle playlists',
+                             'Finished at '+ utils.displayTime()]);
+}
+
+archive.track.current = function () {
+    archive.track.fromURI(player.track.uri)
+    controls.next();
+}
+
+archive.track.fromURI = function (spTrackUri) {
+    var name, artist, album, uri;
+    models.Track.fromURI(spTrackUri, function (t){
+        if (spTrackUri.search('spotify:local:') != -1) {
+            $.getJSON("http://" + serverIP + "/cmd/gettracksforlocal/" + spTrackUri, function (data) {
+                name = 
+                artist = 
+                album = 
+                uri = spTrackUri
+            })
+        } else {
+            name = t.toString().decodeForText();
+            artist = t.artists[0].name.decodeForText();
+            album = t.album.name.decodeForText();
+            uri = t.uri;
+        }
+
+
+        var a = config.Archive;
+        var pl = [];
+        var results = []
+
+        if (a.Archive_from_all_shuffle_playlists) {
+            pl = pl.concat(spls);
+            }
+
+        if (a.Archive_from_all_favorite_playlists) {
+            pl = pl.concat(fpls);
+            }
+
+        pl.forEach(function (pl) {
+            if (pl.indexOf(uri) != -1) {
+                results.push({
+                    'name': pl.name,
+                    'uri':  pl.uri
+                });
+                while (pl.indexOf(uri) != -1){
+                    pl.remove(uri);
+                }
+            }
+        })
+        var archiveData = {
+            "name":     name,
+            "artist":   artist,
+            "album":    album,
+            "trackURI": uri,
+            "plURIs":   JSON.stringify(results)
+        };
+        if (results.length > 0) {
+            log('Archive', 'Archiving track ' + name);  
+            $.post("http://" + serverIP + "/cmd/archive", archiveData);
+        }
+
+    })
+}
+
+
+archive.artist.current = function () {
+    var t = player.track;
+    controls.next();
+    if (t.uri.search('spotify:local:') != -1)  {
+        // local tracks have no artist uri
+        archive.artist.fromURI(t.uri);
+        remove.track.fromURI(t.uri);
+    } else {
+        // but we can be more accurate if we know it
+        archive.artist.fromURI(t.artists[0].uri);
+    }
+}
+
+var j1;
+function testjson (uri) {
+    $.getJSON("http://" + serverIP + "/cmd/gettracksforlocal/" + uri, function (data) {
+        j1 = data;
+    })
+}
+
+archive.artist.fromURI = function (uri) {
+    var cmd;
+    if (uri.search('spotify:local:') != -1) {
+        cmd = "/cmd/gettracksforlocal/"
+    } else {
+        cmd = "/cmd/gettracksforartist/"
+    }
+
+    $.getJSON("http://" + serverIP + cmd + uri, function (data) {
+        tracks = [];
+        log('Archiving Artist', "Archiving all tracks for artist '" + data.name + '"');
+
+        if (data.albums != undefined){
+            data.albums.forEach(function(a){
+                a.tracks.forEach(function(t){
+                    tracks.push(t.href);
+                    })
+                })
+                tracks.forEach(function (t) {
+                    archive.track.fromURI(t);
+                    }
+                )
+        } else {
+            log('Archiving Artist', 'Artist for local track was not found on Spotify');
+        }
+    })
+}
+
+
+archive.album.current = function () {
+    var t = player.track;
+    controls.next();
+    if (t.uri.search('spotify:local:') != -1)  {
+        // local tracks have no artist uri
+        archive.album.fromURI(t.uri)
+    } else {
+        // but we can be more accurate if we know it
+        archive.album.fromURI(t.album.uri);
+    }
+}
+
+archive.album.fromURI = function (uri) {
+    var cmd;
+    var local = (uri.search('spotify:local:') != -1)
+    if (local) {
+        cmd = "/cmd/gettracksforlocal/"
+    } else {
+        cmd = "/cmd/gettracksforalbum/"
+    }
+
+    $.getJSON("http://" + serverIP + cmd + uri, function (data) {
+        tracks = [];
+        log('Archiving Album', "Archiving all tracks for album '" + data.name + '"');
+
+        if (data.albums != undefined) {
+            if (local) {
+                if (data.found_in_album.length > 0) {
+                    data.found_in_album.forEach(function(f) {
+                        data.albums.forEach(function (alb) {
+                            if (alb.source_uri == f) {
+                                alb.tracks.forEach(function (t) {
+                                    tracks.push(t.href);
+                                })
+                            }
+                        })
+                    })
+                    tracks.forEach(function (t) {
+                        archive.track.fromURI(t);
+                    })
+                }
+            } else {
+                log('Archiving Album', 'Album with track was not found on Spotify');
+            }
+        }
+    })
 }
 
 remove.artist.current = function () {
@@ -422,15 +611,15 @@ remove.artist.current = function () {
     }
     var t = player.track;
     controls.next();
-    remove.artist.fromURI(t.artists[0].uri);
+    if (t.uri.search('spotify:local:') != -1)  {
+        remove.artist.fromLocal(t.uri)
+    } else {
+        remove.artist.fromSpURI(t.artists[0].uri);
     }
+}
 
-remove.artist.fromURI = function (spArtistURI) {
+remove.artist.fromSpURI = function (spArtistURI) {
     // will only work for spotify artists, will not work for local tracks
-    if (spArtistURI.search('spotify:local:') != -1)  {
-        log('Removing Artist',"Sorry, 'Remove Artist' is not supported on local tracks");
-        return;
-    }
     models.Artist.fromURI(spArtistURI, function(a){
         log("Removing Artist", ["Removing all tracks from artist",
                                 a.name.decodeForText()]);
@@ -450,6 +639,40 @@ remove.artist.fromURI = function (spArtistURI) {
     })
 }
 
+remove.artist.fromLocal = function (localURI) {
+    remove.track.fromURI(localURI);
+
+    $.getJSON("http://" + serverIP + "/cmd/gettracksforlocal/" + localURI, function (data) {
+        tracks = [];
+        log('Removing Artist', "Removing all tracks for artist '" + data.name + '"');
+
+        if (data.albums != undefined){
+            data.albums.forEach(function(a){
+                a.tracks.forEach(function(t){
+                    tracks.push(t.href);
+                    })
+            })
+            console.log(tracks)
+            var count = 0;
+            var pl = fpls.concat(spls);
+            pl.forEach(function(p){
+                log('', "Searching playlist '" + p.name + "'")
+                tracks.forEach(function (t) {
+                    if (p.indexOf(t) != -1) {
+                        p.remove(t);
+                        models.Track.fromURI(t, function (tr){
+                            log('', "Removed '" + tr.toString() + "'");    
+                        })
+                        
+                    }
+                })
+            })
+        } else {
+            log('Removing Artist', 'Artist for local track was not found on Spotify');
+        }
+    })
+}
+
 remove.album.current = function () {
     if (deleteLaterTrack != undefined){
         remove.later.cancel();
@@ -459,6 +682,7 @@ remove.album.current = function () {
     remove.album.fromURI(t.album.uri);}
   
 remove.album.fromURI = function (spAlbumURI) {
+    
     // will only work for spotify artists, will not work for local tracks
     if (spAlbumURI.search('spotify:local:') != -1)  {
         log('Removing Album',"Sorry, 'Remove Album' is not supported on local tracks");

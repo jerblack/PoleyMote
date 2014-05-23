@@ -22,12 +22,12 @@ $(function () { // Starts when app loads
     var args = models.application.arguments
 
     doRemote();
-    utils.getSettings();
+    utils.settings.get();
 
     // Update the page when the app loads
     nowplaying.dashboard();
     dashboard.toolButtons();
-    utils.startWorker();
+    utils.worker.start();
 
     // Listen for track changes and update the page
     player.observe(models.EVENT.CHANGE, function (event) {
@@ -48,12 +48,7 @@ $(function () { // Starts when app loads
 			}
             nowplaying.dashboard()
             controls.appendToQueue();
-            if (lastTrack != undefined && lastTrack.search('spotify:local:') != -1) {
-                utils.migrateLocalTrackToSp(lastTrack);
-            }
-            setTimeout(function(){
-                lastTrack = player.track.uri;
-            }, 1000);
+            utils.migrate.whenDone()
             // getPlayQueue();
         }
         remove.later.process();
@@ -74,7 +69,7 @@ function doRemote() {
         log("Connection to Server", ["Socket opened", "Connected to PoleyMote server"]);
         statusNode.innerHTML = "Connected";
         statusNode.className = "success";
-        utils.getSettings();
+        utils.settings.get();
     };
 
     webSocket.onclose = function (e) {
@@ -200,13 +195,19 @@ function handleMsg(cmd) {
                 controls.play.shuffle();
                 break;
             case 'archivetrack':
-                controls.archiveTrack();
+                archive.track.current();
                 break;
             case 'removeartist':
                 remove.artist.current();
                 break;
             case 'removealbum':
                 remove.album.current();
+                break;
+            case 'addartist':
+                add.artist.current();
+                break;
+            case 'addalbum':
+                add.album.current();
                 break;
         }
     }
