@@ -126,7 +126,40 @@ def handleCMD(cmd, opt):
             "'/cmd/getThumbsDown' -> Sending list of 'thumbs down' tracks")
         return json.dumps(getThumbsDown())
 
-    # elif (cmd == "requestbookmarks"):
+    elif (cmd == "thumbsdown"):
+        log("handleCMD", "'/cmd/thumbsdown' -> " +
+            "thumbs down called on local file")
+        thumbsDown(opt)
+
+    elif (cmd == "thumbsup"):
+        log("handleCMD", "'/cmd/thumbsup' -> " +
+            "thumbs up called on local file")
+        thumbsUp(opt)
+
+    elif (cmd == "archive"):
+        log("handleCMD", "'/cmd/archive' -> " +
+            "track archived")
+        archive(opt)
+
+    elif (cmd == "gettracksforartist"):
+        log("handleCMD", "'/cmd/gettracksforartist' -> " + opt)
+        return json.dumps(getTracksForArtist(opt))
+
+    elif (cmd == "gettracksforalbum"):
+        log("handleCMD", "'/cmd/gettracksforalbum' -> " + opt)
+        return json.dumps(getTracksForAlbum(opt))
+
+    elif (cmd == "gettracksforlocal"):
+        log("handleCMD", "'/cmd/gettracksforlocal' -> " + opt)
+        return json.dumps(getSpURIsForLocal(opt))
+
+    elif (cmd == "migrate"):
+        log("handleCMD", "'/cmd/migrate'")
+        tracks = opt['tracks'].split(',')
+        return json.dumps(migrate(tracks))
+
+
+            # elif (cmd == "requestbookmarks"):
     #     log("handleCMD",
     #         "'/cmd/getbookmark/" + opt +
     #         "' -> Send WebSocket 'getbookmarks+" + opt +
@@ -171,33 +204,6 @@ def handleCMD(cmd, opt):
     #         "'/cmd/getqueue' -> " +
     #         "Client requested current queue")
     #     return qInfo
-
-    elif (cmd == "thumbsdown"):
-        log("handleCMD", "'/cmd/thumbsdown' -> " +
-            "thumbs down called on local file")
-        thumbsDown(opt)
-
-    elif (cmd == "thumbsup"):
-        log("handleCMD", "'/cmd/thumbsup' -> " +
-            "thumbs up called on local file")
-        thumbsUp(opt)
-
-    elif (cmd == "archive"):
-        log("handleCMD", "'/cmd/archive' -> " +
-            "track archived")
-        archive(opt)
-
-    elif (cmd == "gettracksforartist"):
-        log("handleCMD", "'/cmd/gettracksforartist' -> " + opt)
-        return json.dumps(getTracksForArtist(opt))
-
-    elif (cmd == "gettracksforalbum"):
-        log("handleCMD", "'/cmd/gettracksforalbum' -> " + opt)
-        return json.dumps(getTracksForAlbum(opt))
-
-    elif (cmd == "gettracksforlocal"):
-        log("handleCMD", "'/cmd/gettracksforlocal' -> " + opt)
-        return json.dumps(getSpURIsForLocal(opt))
 
 
 # spotify:local:Butterfly+Bones:BIRP%21+March+2010:%3c3:228
@@ -466,16 +472,65 @@ if __name__ == "__main__":
 
 
 lookup_uri = 'http://ws.spotify.com/lookup/1/.json?'
-search_uri = 'http://ws.spotify.com/search/1/artist.json?q='
+artist_search_uri = 'http://ws.spotify.com/search/1/artist.json?q='
+track_search_uri = 'http://ws.spotify.com/search/1/track.json?q='
 
 pho = 'spotify:artist:1xU878Z1QtBldR7ru9owdU'
+
+
+# spotify:local:Fergus+%26+Geronimo:KEXP+Song+of+the+Day:On+and+On:90
+
+def migrate(track_uris):
+    if type(track_uris) is not list:
+        track_uris = [track_uris]
+    tracks = []
+    for t in track_uris:
+        if (t.find('spotify:local:') != -1):
+            try:
+                print t
+                track_info = local.parseSPurl(t)
+                track = {
+                    'artist': track_info[0],
+                    'title':  track_info[2],
+                    'local_uri': t
+                }
+                r = requests.get(track_search_uri + urllib.quote(track['artist']) + ' ' + urllib.quote(track['title']))
+                wait = 0.0
+                timeout = 0
+                while (r.text == '' and wait < 3.0):
+                    time.sleep(0.1)
+                    wait += 0.1
+                    if wait == 3.0:
+                        timeout = 1
+                if timeout == 0:
+                    x = json.loads(r.text)
+                    found = 0
+                    for tr in x['tracks']:
+                        if found == 0:
+                            name = tr['name'].lower()
+                            artist = tr['artists'][0]['name'].lower()
+                            if (name == track['title'].lower() and artist == track['artist'].lower()):
+                                track['spotify_uri'] = tr['href']
+                                found = 1
+                                print 'FOUND: ',track['title'],'by',track['artist']
+                    if found == 0:
+                        print 'Did not find: ',track['title'],'by',track['artist']
+                    tracks.append(track)
+                else:
+                    print 'Timed out: ',track['title'],'by',track['artist']
+            except ValueError:
+                print 'Error: ',t
+    print 'Finished - RETURNING'
+    return tracks
+
+
 
 
 def getSpURIsForLocal(local_uri):
     track = local.parseSPurl(local_uri)
     name = track[2].lower()
     artist = track[0].lower()
-    r = requests.get(search_uri + artist)
+    r = requests.get(artist_search_uri + artist)
     while (r.text == ''):
         time.sleep(0.1)
     x = json.loads(r.text)
@@ -499,6 +554,35 @@ def getSpURIsForLocal(local_uri):
             return artist_info
     #     except:
     #         pass
+    return {}
+
+
+def getSpTrackForLocal(local_uri):
+    track = local.parseSPurl(local_uri)
+    name = track[2]
+    artist = track[0]
+    r = requests.get(artist_search_uri + artist)
+    while (r.text == ''):
+        time.sleep(0.1)
+    x = json.loads(r.text)
+    spTrack = {}
+    spTrack['source_uri'] = local_uri
+    spTrack['artist'] = artist
+    spTrack['name'] = name
+
+    for a in x['artists']:
+        if artist.lower() == a['name'].lower():
+            uri = a['href']
+            tracks = getTracksForArtist(uri)
+            albums = tracks['albums']
+            for a in albums:
+                found = 0
+                for t in a['tracks']:
+                    if (found == 0):
+                        if (name.lower() == t['name'].lower()):
+                            spTrack['sp_uri'] = t['href']
+                            found = 1
+            return spTrack
     return {}
 
 

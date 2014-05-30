@@ -145,7 +145,7 @@ def resetDefaultConfig():
             "Show_option_for_deleting_all_by_artist": True,
             "Show_option_for_deleting_all_by_album": True,
             "Delete_Later_Playlist":
-            "spotify:user:jerblack:playlist:67EixlPyzPOax02RdqquBs"
+            "spotify:user:jerblack:playlist:4EtycmfHvTNiQAJmq6kvJi"
             },
         "Archive": {
             "Archive_from_current_playlist": True,

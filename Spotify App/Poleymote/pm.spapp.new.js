@@ -173,3 +173,50 @@ function t1() {
     console.log('t1');
 }
 
+
+// controls.play.shuffle3 = function() {
+//     console.log('started at ' + utils.displayTime());
+
+//     var spls = config.Playlists.Shuffle_Playlists;
+//     var spl_size = config.Playlists.Shuffle_Playlist_Size;
+
+//     log('Now Playing', ["Now playing in shuffle mode.", "Playing random tracks from shuffle playlists."]);
+    
+//     q = new models.Playlist();
+//     qPLs = new Array();
+
+//     // add first song to get music started immediately
+//     models.Playlist.fromURI(spls[Math.floor(Math.random() * spls.length)].uri, function(p){
+//         q.add(p.tracks[Math.floor(Math.random() * p.length)]);
+//         qPLs.push(pl_index);
+//         player.play(q.tracks[0], q);
+//     })
+//     setTimeout(function(){
+//         var data = {
+//                     caller: 'playshuffle',
+//                     num_playlists: spls.length,
+//                     playlist_counts: [],
+//                     chunks: spl_size
+//                    };
+//         spls.forEach(function(spl){
+//             count = models.Playlist.fromURI(spl.uri).tracks.length;
+//             data.playlist_counts.push(count);
+//             })
+//         utils.doInWorker('shuffle', data);
+//     },1000)
+// }
+
+
+
+// controls.play.shuffle3.finish = function (input) {
+    
+
+//     input.forEach(function(t){
+//         t = pl[t.pl].tracks[t.track]
+//         if (t != undefined){
+//             q.add(t);
+//             qPLs.push(pl[t.pl]);
+//         }
+//     })
+//     console.log('finished at ' + utils.displayTime());
+// }
