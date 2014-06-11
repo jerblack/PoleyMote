@@ -100,11 +100,12 @@ def resetDefaultConfig():
                     "Name": "Spotify Library 4",
                     "uri":
                     "spotify:user:jerblack:playlist:6MmxBfR7jiX4f9cSi5O2PW"
-                }, {
-                    "Name": "iTunes Music",
-                    "uri":
-                    "spotify:user:jerblack:playlist:7gLGqRlHQVQY2Xc6tx5PRk"
                 }
+                # , {
+                #     "Name": "iTunes Music",
+                #     "uri":
+                #     "spotify:user:jerblack:playlist:7gLGqRlHQVQY2Xc6tx5PRk"
+                # }
             ],
             "Shuffle_Playlist_Size": 250,
             "Automatically_add_music_to_queue_when_nearing_end": True,
