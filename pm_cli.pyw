@@ -13,7 +13,9 @@ if len(sys.argv) > 1:
 		r = req.get(uri + sys.argv[1])
 	except req.exceptions.ConnectionError:
 		err = '''
-Unable to connect to the PoleyMote server. Ensure that it is running, and if it is running on a different PC from the one this script is running on, you must specify the IP address of that PC in the command line as the second option. 
+Unable to connect to the PoleyMote server. 
+Ensure it is running
+If the server is running on a different PC, specify the IP address of that PC as the second option. 
 
 For example:
 	pm_cli.py playpause 192.168.0.105
@@ -33,7 +35,7 @@ deletelater	canceldeletelater
 deleteartist	deletealbum
 
 Server IP:
-If you are not running this file on the same computer where you are running the PoleyMote server, you must also specify the ip address of the remote server.
+If the server is running on a different PC, specify the IP address of that PC as the second option. 
 
 Examples:
 pm_cli.py playpause

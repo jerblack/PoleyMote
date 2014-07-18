@@ -10,7 +10,7 @@ var sp = getSpotifyApi(1),
     playerImage = new views.Player();
 
 
-var serverIP = "192.168.0.50";
+var serverIP = "192.168.0.5";
 
 var q = new Array();
 var qPLs = new Array();
@@ -462,20 +462,6 @@ utils.handleMsg = function (cmd) {
 }
 
 
-            // // unfinished
-            // case 'getbookmarks':
-            //     sendBookmarks(cmd[1]);
-            //     break;
-            // case 'playbookmarks':
-            //     playBookmark(cmd[1]);
-            //     break;
-            // case 'addbookmark':
-            //     addToBookmarks(cmd[1]);
-            //     break;
-            // case 'removebookmark':
-            //     removeFromBookmarks(cmd[1], cmd[2]);
-            //     break;
-
 utils.connectServer = function () {
     var url = "ws://localhost:9000";
     var appName = "poleymote"
@@ -635,6 +621,18 @@ utils.playlist.init = function () {
                 fpls.push(p);
             }})})};
 
+utils.playlist.getURI = function (name) {
+    console.log(name);
+    var allPls = sp.core.library.getPlaylistsUri();
+    var uri;
+    allPls.forEach(function(p){
+        if (p.name == name) {
+            uri = p.uri;
+        }
+    })
+    return uri;
+}
+
 utils.playlist.makeOffline = function () {
     var playlist_size = 250;
     var shufflePLURIs = config.Playlists.Shuffle_Playlists;
@@ -654,17 +652,6 @@ utils.playlist.makeOffline = function () {
     log('Offline Playlist', ["Offline playlist has been populated", chunk + " tracks from each of the shuffle playlists have been added"]);
 }
 
-utils.playlist.getURI = function (name) {
-    console.log(name);
-    var allPls = sp.core.library.getPlaylistsUri();
-    var uri;
-    allPls.forEach(function(p){
-        if (p.name == name) {
-            uri = p.uri;
-        }
-    })
-    return uri;
-}
 
 // --------------------------- //
 // ------ utils.shuffle ------ //
@@ -700,14 +687,11 @@ utils.shuffle.balance   = function () {
             shuffles.forEach(function(sh){
                 if (movers.length > 0 && sh.length < avg - 5){
                     var chunk = avg - sh.length;
-                    for (var i = 0, i < chunk, i++) {
-                        sh.add(movers[0].uri)
-                        
+                    for (var i = 0; i < chunk; i++) {
+                        sh.add(movers[0].uri)          
                     }
                 }
             })
-
-
         }
     })
 
@@ -715,6 +699,22 @@ utils.shuffle.balance   = function () {
 
 }
 
+
+utils.shuffle.createFolder = function () {
+    var folder = config.Playlists.Spl_folder;
+    var allPls = sp.core.library.getPlaylistsUri();
+    var found = false;
+    allPls.forEach(function(p){
+        if (p.name != undefined && 
+            p.name.search(folder) != -1 && 
+            p.type == 'start-group') {
+                found = true;
+            }})
+    if (!found) {
+        sp.core.library.createPlaylistGroup(folder);
+    }
+    return 0;
+}
 
 
 utils.shuffle.getHighest = function () {
@@ -735,22 +735,6 @@ utils.shuffle.getHighest = function () {
             highest_spl = index;
             }})
     return highest_spl;
-}
-
-utils.shuffle.createFolder = function () {
-    var folder = config.Playlists.Spl_folder;
-    var allPls = sp.core.library.getPlaylistsUri();
-    var found = false;
-    allPls.forEach(function(p){
-        if (p.name != undefined && 
-            p.name.search(folder) != -1 && 
-            p.type == 'start-group') {
-                found = true;
-            }})
-    if (!found) {
-        sp.core.library.createPlaylistGroup(folder);
-    }
-    return 0;
 }
 
 utils.shuffle.moveSplToFolder = function (playlist) {
@@ -890,6 +874,55 @@ utils.parseSPurl = function (spURL) {
     } else {
         return {}
     }
+}
+
+
+utils.migrate.server = function (plURI, iterations) {
+    if (iterations == undefined) {
+        iterations = 100;
+    }
+    var count = 0;
+    not_found_pl = 'spotify:user:jerblack:playlist:1ywNJTpSpq0FQN3zmUvfqw'
+    models.Playlist.fromURI(plURI, function (p) {
+        tUris = [];
+        found_uris = [];
+        not_found_uris = [];
+        local_uris = [];
+        p.tracks.forEach(function (t) {
+            if (count < iterations && t.uri.search('spotify:local:')!= -1) { tUris.push(t.uri); }
+            count ++;
+        })
+
+        $.post("http://" + serverIP + "/cmd/migrate", {'tracks':tUris.toString()}, function (data){
+            data.forEach(function (d) {
+                if (d.spotify_uri != undefined) {
+                    console.log('found ' + d.spotify_uri);
+                    found_uris.push(d.spotify_uri);
+                    remove.queue.add(d.local_uri);
+                } else {
+                    console.log('no spotify track found for ' + d.local_uri);
+                    not_found_uris.push(d.local_uri);
+                }
+                local_uris.push(d.local_uri);
+            })
+
+            console.log('Finished Searching, now adding found tracks');
+            add.trackArray(found_uris);
+
+            console.log('Separating tracks that were not found')
+            models.Playlist.fromURI(not_found_pl, function(nf){
+                not_found_uris.forEach(function(nu){
+                    nf.add(nu);
+                })
+            })
+
+            local_uris.forEach(function(l){
+                p.remove(l);
+            })
+            console.log('Finished Migration');
+            remove.queue.process();
+        });
+    })
 }
 
 // ----------------- //
@@ -1543,53 +1576,6 @@ remove.queue.process = function () {
 
 
 
-utils.migrate.server = function (plURI, iterations) {
-    if (iterations == undefined) {
-        iterations = 100;
-    }
-    var count = 0;
-    not_found_pl = 'spotify:user:jerblack:playlist:1ywNJTpSpq0FQN3zmUvfqw'
-    models.Playlist.fromURI(plURI, function (p) {
-        tUris = [];
-        found_uris = [];
-        not_found_uris = [];
-        local_uris = [];
-        p.tracks.forEach(function (t) {
-            if (count < iterations && t.uri.search('spotify:local:')!= -1) { tUris.push(t.uri); }
-            count ++;
-        })
-
-        $.post("http://" + serverIP + "/cmd/migrate", {'tracks':tUris.toString()}, function (data){
-            data.forEach(function (d) {
-                if (d.spotify_uri != undefined) {
-                    console.log('found ' + d.spotify_uri);
-                    found_uris.push(d.spotify_uri);
-                    remove.queue.add(d.local_uri);
-                } else {
-                    console.log('no spotify track found for ' + d.local_uri);
-                    not_found_uris.push(d.local_uri);
-                }
-                local_uris.push(d.local_uri);
-            })
-
-            console.log('Finished Searching, now adding found tracks');
-            add.trackArray(found_uris);
-
-            console.log('Separating tracks that were not found')
-            models.Playlist.fromURI(not_found_pl, function(nf){
-                not_found_uris.forEach(function(nu){
-                    nf.add(nu);
-                })
-            })
-
-            local_uris.forEach(function(l){
-                p.remove(l);
-            })
-            console.log('Finished Migration');
-            remove.queue.process();
-        });
-    })
-}
 
 
 

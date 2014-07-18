@@ -37,12 +37,9 @@ def indexItunesLibrary():
     tracks = x['Tracks']
     conn = sql.connect(config.db)
     conn.text_factory = str
-    c = conn.cursor()
-    c.execute('DROP TABLE IF EXISTS itunes;')
-    c.execute('CREATE TABLE itunes(id INTEGER PRIMARY KEY AUTOINCREMENT,' +
-              ' location TEXT, artist TEXT, album TEXT, name TEXT, year' +
-              ' TEXT, track_number TEXT, duration TEXT, persistent_id TEXT,' +
-              ' pid_low TEXT, pid_high TEXT, img TEXT);')
+    cx = conn.cursor()
+    cx.execute('''DROP TABLE IF EXISTS itunes;''')
+    cx.execute('''CREATE TABLE itunes(id INTEGER PRIMARY KEY AUTOINCREMENT,location TEXT, artist TEXT, album TEXT, name TEXT, year TEXT, track_number TEXT, duration TEXT, persistent_id TEXT, pid_low TEXT, pid_high TEXT, img TEXT);''')
     count = 0
     warnings.filterwarnings("ignore")
 
@@ -90,13 +87,8 @@ def indexItunesLibrary():
                 count += 1
                 if (count % 100 == 0):
                     print count
-                c.execute('INSERT INTO itunes(location,artist,album,name' +
-                          ',year,track_number, ' +
-                          'duration, persistent_id, pid_low, pid_high, img) ' +
-                          'VALUES(?,?,?,?,?,?,?,?,?,?,?);',
-                          (repr(location), artist, album, name, year,
-                           track_number, duration, pid,
-                           pid_low, pid_high, imgPath))
+                cx.execute('''INSERT INTO itunes(location,artist,album,name,year,track_number,duration, persistent_id, pid_low, pid_high, img) VALUES(?,?,?,?,?,?,?,?,?,?,?);''',
+                          (repr(location), artist, album, name, year,track_number, duration, pid, pid_low, pid_high, imgPath))
     conn.commit()
     conn.close()
 

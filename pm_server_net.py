@@ -6,7 +6,7 @@ import pm_server_config as config
 
 from twisted.internet import reactor
 from websocket import create_connection
-from autobahn.websocket import (WebSocketServerFactory,
+from autobahn.twisted.websocket import (WebSocketServerFactory,
                                 WebSocketServerProtocol, listenWS)
 
 
