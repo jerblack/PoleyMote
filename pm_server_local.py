@@ -290,3 +290,15 @@ def itunesThumbsUp(track):
     tr = allTracks.ItemByPersistentID(t['pid_low'], t['pid_high'])
     tr.Rating = 100
     pythoncom.CoUninitialize()
+
+def itunesFixAlbumArtist():
+	pythoncom.CoInitialize()
+	iTunes = Dispatch("iTunes.Application")
+	tracks = iTunes.SelectedTracks
+	for t in tracks:
+		try:
+			t.AlbumArtist = t.Artist
+		except com_error:
+			pass
+	pythoncom.CoUninitialize()
+

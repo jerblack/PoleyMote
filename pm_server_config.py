@@ -67,15 +67,15 @@ def resetDefaultConfig():
                 }, {
                     "Name": "24 Hours - The Starck Mix",
                     "uri":
-                    "spotify:user:jerblack:playlist:0RfjHxYWuODr4x96gx2K5C"
+                    "spotify:user:jerblack:playlist:47r1MDzcY916KcduXZDuGU"
                 }, {
                     "Name": "iTunes Music",
                     "uri":
-                    "spotify:user:jerblack:playlist:1lvLZd8Z1jj62X7DGJw3ic"
+                    "spotify:user:jerblack:playlist:71ti4Mn94w0M2LgWzfk7kw"
                 }, {
                     "Name": "Classical",
                     "uri":
-                    "spotify:user:jerblack:playlist:40iQFSKUhXSbF3d5Vibuo2"
+                    "spotify:user:jerblack:playlist:1kHTBSItrsSjJMmmlzXVfc"
                 }
             ],
             "Shuffle_Playlists":
@@ -104,7 +104,7 @@ def resetDefaultConfig():
                 , {
                     "Name": "iTunes Music",
                     "uri":
-                    "spotify:user:jerblack:playlist:1lvLZd8Z1jj62X7DGJw3ic"
+                    "spotify:user:jerblack:playlist:71ti4Mn94w0M2LgWzfk7kw"
                 }
             ],
             "Shuffle_Playlist_Size": 250,
@@ -145,8 +145,9 @@ def resetDefaultConfig():
             "Custom_purgatory_folder": "",
             "Show_option_for_deleting_all_by_artist": True,
             "Show_option_for_deleting_all_by_album": True,
-            "Delete_Later_Playlist":
-            "spotify:user:jerblack:playlist:4EtycmfHvTNiQAJmq6kvJi"
+            "Delete_Track_Queue":"spotify:user:jerblack:playlist:4EtycmfHvTNiQAJmq6kvJi",
+            "Delete_Artist_Queue":"spotify:user:jerblack:playlist:4sZzEkCXWz2OZakwsicMYu",
+            "Delete_Album_Queue": "spotify:user:jerblack:playlist:6g63R6jX0jncHn6NF2Vfkj"
             },
         "Archive": {
             "Archive_from_current_playlist": True,
@@ -155,7 +156,8 @@ def resetDefaultConfig():
             "Archive_duration": "PLACEHOLDER",
             "Restore_to_original_playlists": True,
             "Restore_to_custom_playlist": False,
-            "Custom_restore_playlist": "PLACEHOLDER URI"
+            "Custom_restore_playlist": "PLACEHOLDER URI",
+            "Archive_Track_Queue":"spotify:user:jerblack:playlist:7g4Wk46Gt6aKVa7CsyZqHC"
             },
         "Heart": {
             "Star_in_Spotify": True,

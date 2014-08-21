@@ -463,7 +463,7 @@ utils.handleMsg = function (cmd) {
 
 
 utils.connectServer = function () {
-    var url = "ws://localhost:9000";
+    var url = "ws://"+serverIP+":9000";
     var appName = "poleymote"
     var webSocket = new WebSocket(url);
 
@@ -609,7 +609,8 @@ var spls = [], fpls = [];
 utils.playlist.init = function () {
     spls = [];
     fpls = [];
-    spls.push(models.library.starredPlaylist);
+    // Uncomment this to include starred playlist in shuffles
+    // spls.push(models.library.starredPlaylist);
     config.Playlists.Shuffle_Playlists.forEach(function(spl){
         models.Playlist.fromURI(spl.uri, function(p){
             if (spls.indexOf(p) == -1) {
@@ -925,6 +926,38 @@ utils.migrate.server = function (plURI, iterations) {
     })
 }
 
+
+utils.migrate.server_new = function (plURI, iterations) {
+    models.Playlist.fromURI(plURI, function (p) {
+        local_uris = [];
+        found_uris = [];
+        p.tracks.forEach(function (t) {
+            if (t.uri.search('spotify:local:') != -1) 
+            { 
+                local_uris.push(t.uri); 
+            }
+        })
+
+        $.post("http://" + serverIP + "/cmd/migrate", {'tracks':local_uris.toString()}, function (data){
+            data.forEach(function (d) {
+                if (d.spotify_uri != undefined) {
+                    console.log('found ' + d.spotify_uri);
+                    found_uris.push(d.spotify_uri);
+                    remove.queue.add(d.local_uri);
+                } else {
+                    console.log('no spotify track found for ' + d.local_uri);
+                }
+            })
+
+            console.log('Finished Searching, now adding found tracks');
+            add.trackArray(found_uris);
+
+            console.log('Finished Migration');
+            // remove.queue.process();
+        });
+    })
+}
+
 // ----------------- //
 // ------ add ------ //
 // ----------------- //
@@ -1093,7 +1126,9 @@ add.artist.fromURI = function (uri) {
 // -------------------- //
 // ------ dedupe ------ //
 // -------------------- //
-dedupe = {};
+dedupe = function () {
+	dedupe.find()
+};
 
 dedupe.find = function () {
     log('Duplicate Remover', ['Starting search for duplicate tracks',
@@ -1141,7 +1176,8 @@ dedupe.delete = function (dupes) {
 archive =   {
     track:      {},
     artist:     {},
-    album:      {}
+    album:      {},
+    queue:      {}, 
             };
 
 archive.track.current = function () {
@@ -1309,6 +1345,18 @@ archive.album.fromURI = function (uri) {
     })
 }
 
+
+archive.queue.process = function () {
+    models.Playlist.fromURI(config.Archive.Archive_Track_Queue, function(p){
+        p.tracks.forEach(function(t){
+            archive.track.fromURI(t.uri);
+            p.remove(t.uri);
+        })
+    })
+}
+
+
+
 // ------------------ //
 // ------ star ------ //
 // ------------------ //
@@ -1357,6 +1405,31 @@ remove = {
     later:  {},
     queue:  {}
          };
+
+remove.fromURI = function (uri, local_type) {
+    local   = 'spotify:local:' ;
+    artist  = 'spotify:artist:';
+    album   = 'spotify:album:' ;
+    track   = 'spotify:track:' ;
+    
+    if (uri.search(local) != -1) {
+        if (local_type == undefined || local_type == 'artist')
+        {
+            remove.artist.fromURI(uri);
+        } else { 
+            remove.album.fromURI(uri);
+        }
+    } else if (uri.search(artist) != -1) {
+        remove.artist.fromURI(uri);
+    } else if (uri.search(album) != -1) {
+        remove.album.fromURI(uri);
+    } else if (uri.search(track) != -1) {
+        models.Track.fromURI(uri, function (t) {
+            var a = t.artists[0].data.uri;
+            remove.artist.fromURI(a);
+        })
+    }
+}
 
 remove.artist.current = function () {
     if (deleteLaterTrack != undefined){
@@ -1554,25 +1627,40 @@ remove.later.cancel = function () {
 // -------------------------- //
 
 remove.queue.add = function (trackURI) {
-    models.Playlist.fromURI(config.Delete.Delete_Later_Playlist, function(p){
+    models.Playlist.fromURI(config.Delete.Delete_Track_Queue, function(p){
         log("Adding to 'Remove Later' queue", "Added " + trackURI + " to the 'Remove Later' queue." )
         p.add(trackURI);
         })
     }
 
+
 remove.queue.process = function () {
-    tracks = []
-    models.Playlist.fromURI(config.Delete.Delete_Later_Playlist, function(p){
+    models.Playlist.fromURI(config.Delete.Delete_Track_Queue, function(p){
         p.tracks.forEach(function(t){
-            tracks.push(t.uri);
-        })
-        tracks.forEach(function (tUri) {
-            remove.track.fromURI(tUri);
-            p.remove(tUri);
+            remove.track.fromURI(t.uri);
+            p.remove(t.uri);
         })
     })
 }
+remove.queue.process.tracks = remove.queue.process;
 
+remove.queue.process.artists = function () {
+    models.Playlist.fromURI(config.Delete.Delete_Artist_Queue, function(p){
+    p.tracks.forEach(function(t){
+        remove.artist.fromURI(t.artists[0].uri);
+        p.remove(t.uri);
+    })
+})
+}
+
+remove.queue.process.albums = function () {
+    models.Playlist.fromURI(config.Delete.Delete_Album_Queue, function(p){
+    p.tracks.forEach(function(t){
+        remove.album.fromURI(t.album.uri);
+        p.remove(t.uri);
+    })
+})
+}
 
 
 
